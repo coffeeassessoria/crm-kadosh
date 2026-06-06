@@ -618,7 +618,7 @@ td.bold{font-weight:600;color:var(--white)}
 </div>
 
 <!-- MODAL ETAPA KANBAN -->
-<div class="overlay" id="stage-modal-overlay" style="display:none" onclick="if(event.target===this)closeModalStage()">
+<div class="overlay" id="stage-modal-overlay" onclick="if(event.target===this)closeModalStage()">
   <div class="modal" style="max-width:380px">
     <div class="modal-head">
       <div class="modal-title" id="stage-modal-title">Nova Etapa</div>
@@ -1374,13 +1374,13 @@ function openModalStage(stageId = null){
 
   document.getElementById('stage-modal-title').textContent = stage ? 'Editar Etapa' : 'Nova Etapa'
   document.getElementById('stage-name-input').value        = stage?.label || ''
-  document.getElementById('stage-modal-overlay').style.display = 'flex'
+  document.getElementById('stage-modal-overlay').classList.add('open')
   renderSwatches()
   document.getElementById('stage-name-input').focus()
 }
 
 function closeModalStage(){
-  document.getElementById('stage-modal-overlay').style.display = 'none'
+  document.getElementById('stage-modal-overlay').classList.remove('open')
 }
 
 function renderSwatches(){
