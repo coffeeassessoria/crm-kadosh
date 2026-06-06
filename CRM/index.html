@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kadosh CRM | Painel de Gestão</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --orange:#F58220;--orange-dark:#d96e10;--orange-glow:rgba(245,130,32,0.13);
+  --black:#0E0E0E;--dark:#141414;--dark2:#1C1C1C;--dark3:#242424;--dark4:#2C2C2C;
+  --gray:#888;--gray-light:#BDBDBD;--white:#FFFFFF;
+  --border:rgba(255,255,255,0.07);
+  --green:#22C55E;--red:#EF4444;--blue:#3B82F6;--yellow:#F59E0B;--purple:#8B5CF6;
+  --sidebar:220px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Barlow',sans-serif;background:var(--black);color:var(--white);overflow:hidden}
+.layout{display:flex;height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar);background:var(--dark);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.sidebar-logo{padding:22px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:36px;height:36px;border-radius:8px;background:var(--orange);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-text{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;line-height:1.1}
+.logo-text span{color:var(--orange);font-size:11px;font-weight:600;letter-spacing:0.06em;display:block}
+.sidebar-nav{padding:14px 10px;flex:1}
+.nav-section{margin-bottom:22px}
+.nav-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--gray);padding:0 8px;margin-bottom:6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:500;color:var(--gray-light);transition:all .13s;user-select:none;margin-bottom:2px}
+.nav-item:hover{background:var(--dark2);color:var(--white)}
+.nav-item.active{background:var(--orange-glow);color:var(--orange);font-weight:600}
+.nav-icon{width:16px;height:16px;flex-shrink:0;opacity:.65}
+.nav-item.active .nav-icon{opacity:1}
+.nav-badge{margin-left:auto;background:var(--orange);color:#000;font-size:10px;font-weight:700;padding:2px 6px;border-radius:100px;min-width:18px;text-align:center}
+.sidebar-footer{padding:14px 10px;border-top:1px solid var(--border)}
+.user-box{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:7px;background:var(--dark2);cursor:pointer}
+.user-box:hover{background:var(--dark3)}
+.user-avatar{width:30px;height:30px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:#000;flex-shrink:0}
+.user-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:110px}
+.user-role{font-size:10px;color:var(--gray)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{background:var(--dark);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:10}
+.topbar-title{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;text-transform:uppercase}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.topbar-date{font-size:12px;color:var(--gray)}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-family:'Barlow',sans-serif;font-size:13px;font-weight:600;transition:all .13s;white-space:nowrap}
+.btn-primary{background:var(--orange);color:#000}
+.btn-primary:hover:not(:disabled){background:var(--orange-dark)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--gray-light);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--dark2);color:var(--white)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-danger{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.2)}
+.btn-danger:hover{background:rgba(239,68,68,.22)}
+.btn-success{background:rgba(34,197,94,.12);color:var(--green);border:1px solid rgba(34,197,94,.2)}
+.btn-success:hover{background:rgba(34,197,94,.22)}
+.content{padding:24px;flex:1}
+
+/* TABS */
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* LOADING */
+.page-loading{display:flex;align-items:center;justify-content:center;height:300px;flex-direction:column;gap:14px}
+.spinner-lg{width:36px;height:36px;border:3px solid var(--dark3);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-sm{width:14px;height:14px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.kpi-card{background:var(--dark);border:1px solid var(--border);border-radius:11px;padding:18px 20px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi-card.orange::before{background:var(--orange)}
+.kpi-card.green::before{background:var(--green)}
+.kpi-card.yellow::before{background:var(--yellow)}
+.kpi-card.purple::before{background:var(--purple)}
+.kpi-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-bottom:6px}
+.kpi-val{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:800;line-height:1;margin-bottom:5px}
+.kpi-sub{font-size:11px;color:var(--gray)}
+.kpi-bg{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-family:'Barlow Condensed',sans-serif;font-size:56px;font-weight:900;opacity:.05;pointer-events:none}
+
+/* CHARTS */
+.charts-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-bottom:22px}
+.chart-card{background:var(--dark);border:1px solid var(--border);border-radius:11px;padding:20px}
+.chart-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+.chart-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase}
+.chart-sub{font-size:11px;color:var(--gray);margin-top:2px}
+
+/* FUNNEL */
+.funnel-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;margin-bottom:22px}
+.funnel-stage{background:var(--dark);border:1px solid var(--border);border-radius:9px;padding:16px;text-align:center;cursor:pointer;transition:all .13s}
+.funnel-stage:hover,.funnel-stage.active-filter{border-color:var(--orange);background:var(--orange-glow)}
+.f-count{font-family:'Barlow Condensed',sans-serif;font-size:34px;font-weight:800;line-height:1}
+.f-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-top:5px}
+.f-pct{font-size:11px;color:var(--gray);margin-top:3px}
+.stage-novo .f-count{color:var(--blue)}
+.stage-contato .f-count{color:var(--yellow)}
+.stage-agendado .f-count{color:var(--purple)}
+.stage-convertido .f-count{color:var(--green)}
+.stage-perdido .f-count{color:var(--red)}
+
+/* TABLE */
+.table-wrap{background:var(--dark);border:1px solid var(--border);border-radius:11px;overflow:hidden}
+.table-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:7px;background:var(--dark2);border:1px solid var(--border);border-radius:6px;padding:7px 12px;flex:1;min-width:200px;max-width:280px}
+.search-box input{background:none;border:none;outline:none;color:var(--white);font-size:13px;width:100%;font-family:'Barlow',sans-serif}
+.search-box input::placeholder{color:var(--gray)}
+.fsel{background:var(--dark2);border:1px solid var(--border);border-radius:5px;color:var(--gray-light);font-size:12px;padding:6px 9px;cursor:pointer;font-family:'Barlow',sans-serif;outline:none}
+.fsel:focus{border-color:var(--orange)}
+table{width:100%;border-collapse:collapse}
+thead th{padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid rgba(255,255,255,.03);transition:background .1s;cursor:pointer}
+tbody tr:hover{background:var(--dark2)}
+tbody tr:last-child{border-bottom:none}
+td{padding:11px 14px;font-size:13px;color:var(--gray-light);vertical-align:middle}
+td.bold{font-weight:600;color:var(--white)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.badge-novo{background:rgba(59,130,246,.13);color:#60A5FA}
+.badge-contato{background:rgba(245,158,11,.13);color:#FCD34D}
+.badge-agendado{background:rgba(139,92,246,.13);color:#A78BFA}
+.badge-convertido{background:rgba(34,197,94,.13);color:#4ADE80}
+.badge-perdido{background:rgba(239,68,68,.13);color:#F87171}
+.origem-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--gray-light)}
+.sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sdot-facebook_ads{background:#1877F2}
+.sdot-google_ads{background:#EA4335}
+.sdot-instagram{background:#E1306C}
+.sdot-organico{background:var(--green)}
+.sdot-direto{background:var(--gray)}
+.sdot-indicacao{background:var(--yellow)}
+.empty-state{padding:60px;text-align:center}
+.empty-state p{color:var(--gray);margin-top:7px;font-size:13px}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .18s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--dark);border:1px solid var(--border);border-radius:13px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;transform:translateY(6px);transition:transform .18s}
+.overlay.open .modal{transform:translateY(0)}
+.modal-head{padding:20px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--dark);z-index:1}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;text-transform:uppercase}
+.modal-close{background:none;border:none;color:var(--gray);cursor:pointer;font-size:20px;padding:3px 6px;border-radius:4px;line-height:1}
+.modal-close:hover{color:var(--white);background:var(--dark2)}
+.modal-body{padding:22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-light);margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;background:var(--dark2);border:1px solid var(--border);border-radius:6px;padding:9px 13px;font-size:13px;color:var(--white);font-family:'Barlow',sans-serif;outline:none;transition:border-color .13s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--orange)}
+.fg select option{background:var(--dark3)}
+.fg textarea{resize:vertical;min-height:72px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.prefix{position:relative}
+.prefix input{padding-left:34px}
+.prefix::before{content:'R$';position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:12px;pointer-events:none}
+
+/* CALENDAR */
+.cal-wrap{background:var(--dark);border:1px solid var(--border);border-radius:11px;overflow:hidden}
+.cal-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.cal-month{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;text-transform:uppercase}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--border)}
+.cal-day-name{background:var(--dark2);padding:8px;text-align:center;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray)}
+.cal-day{background:var(--dark);padding:8px;min-height:82px;cursor:pointer;transition:background .1s}
+.cal-day:hover{background:var(--dark2)}
+.cal-day.other-month{opacity:.28}
+.cal-day.today .day-num{background:var(--orange);color:#000;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px}
+.day-num{font-size:12px;font-weight:600;margin-bottom:4px;display:inline-block}
+.cal-event{font-size:9px;background:var(--orange-glow);border-left:2px solid var(--orange);color:var(--orange);padding:2px 5px;border-radius:2px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cal-event.s-confirmado{background:rgba(34,197,94,.1);border-color:var(--green);color:#4ADE80}
+.cal-event.s-pendente{background:rgba(245,158,11,.1);border-color:var(--yellow);color:#FCD34D}
+
+/* CAMPANHAS */
+.camp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+.camp-card{background:var(--dark);border:1px solid var(--border);border-radius:11px;padding:20px}
+.camp-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.camp-name{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase}
+.camp-plat{font-size:11px;color:var(--gray);margin-top:2px}
+.camp-status-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700}
+.camp-status-badge.ativa{color:var(--green)}
+.camp-status-badge.inativa{color:var(--gray)}
+.camp-status-dot{width:5px;height:5px;border-radius:50%;background:currentColor}
+.camp-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.camp-metric{background:var(--dark2);border-radius:7px;padding:10px}
+.cm-label{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-bottom:3px}
+.cm-val{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700}
+.cm-roas{color:var(--green)}
+.cm-roi{color:var(--blue)}
+.cm-invest{color:var(--orange)}
+.cm-receita{color:var(--yellow)}
+.roas-box{background:var(--dark);border:1px solid rgba(245,130,32,.2);border-radius:11px;padding:20px;margin-bottom:20px}
+.roas-box-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-transform:uppercase;color:var(--orange);margin-bottom:14px}
+.roas-inputs{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+.roas-result{background:var(--dark2);border-radius:9px;padding:12px 18px;display:flex;align-items:center;gap:18px;margin-top:14px;display:none}
+.roas-num{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800}
+.rn-good{color:var(--green)}
+.rn-avg{color:var(--yellow)}
+.rn-bad{color:var(--red)}
+
+/* DETAIL PANEL */
+.detail-panel{position:fixed;top:0;right:0;height:100vh;width:400px;background:var(--dark);border-left:1px solid var(--border);z-index:200;transform:translateX(100%);transition:transform .22s;overflow-y:auto;display:flex;flex-direction:column}
+.detail-panel.open{transform:translateX(0)}
+.panel-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;background:var(--dark);z-index:1}
+.panel-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-transform:uppercase}
+.panel-body{padding:20px;flex:1}
+.ps{margin-bottom:20px}
+.ps-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);margin-bottom:10px}
+.info-row{display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.03);gap:10px}
+.info-row:last-child{border-bottom:none}
+.ir-label{font-size:11px;color:var(--gray);flex-shrink:0;width:108px}
+.ir-val{font-size:12px;font-weight:500;text-align:right}
+.status-sel{background:var(--dark2);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-size:13px;color:var(--white);font-family:'Barlow',sans-serif;outline:none;width:100%}
+.timeline{display:flex;flex-direction:column}
+.tl-item{display:flex;gap:10px;padding-bottom:14px;position:relative}
+.tl-item:not(:last-child)::before{content:'';position:absolute;left:9px;top:20px;bottom:0;width:1px;background:var(--border)}
+.tl-dot{width:20px;height:20px;border-radius:50%;background:var(--dark3);border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;margin-top:1px}
+.tl-dot.orange{border-color:var(--orange);background:var(--orange-glow)}
+.tl-txt{font-size:12px;font-weight:500}
+.tl-date{font-size:10px;color:var(--gray);margin-top:1px}
+.nota-form{display:flex;gap:7px;margin-top:10px}
+.nota-form input{flex:1;background:var(--dark2);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-size:12px;color:var(--white);font-family:'Barlow',sans-serif;outline:none}
+.nota-form input:focus{border-color:var(--orange)}
+
+/* CONFIG */
+.cfg-section{background:var(--dark);border:1px solid var(--border);border-radius:11px;padding:20px;margin-bottom:16px}
+.cfg-section h3{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;margin-bottom:14px;color:var(--orange)}
+.cfg-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+.cfg-row:last-of-type{border-bottom:none}
+.cfg-row-lbl{font-size:13px;font-weight:500}
+.cfg-row-sub{font-size:11px;color:var(--gray);margin-top:2px}
+
+/* TOAST */
+.toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+.toast{background:var(--dark2);border:1px solid var(--border);border-radius:9px;padding:12px 16px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:9px;transform:translateX(110%);transition:transform .22s;max-width:300px;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.toast.show{transform:translateX(0)}
+.toast.success{border-color:rgba(34,197,94,.3);color:var(--green)}
+.toast.error{border-color:rgba(239,68,68,.3);color:var(--red)}
+.toast.info{border-color:rgba(59,130,246,.3);color:var(--blue)}
+
+/* RT dot */
+.rt-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--dark3);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:var(--gray)}
+
+@media(max-width:1100px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  .charts-grid{grid-template-columns:1fr}
+  .camp-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path fill="#000" d="M3 7h4v14H3zM10 3h4v18h-4zM17 10h4v11h-4z"/></svg>
+    </div>
+    <div class="logo-text">Kadosh CRM<span>Mini Caçambas</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-label">Principal</div>
+      <div class="nav-item active" data-tab="dashboard" onclick="showTab('dashboard')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" data-tab="leads" onclick="showTab('leads')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        Leads
+        <span class="nav-badge" id="badge-leads" style="display:none">0</span>
+      </div>
+      <div class="nav-item" data-tab="agendamentos" onclick="showTab('agendamentos')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Agendamentos
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Marketing</div>
+      <div class="nav-item" data-tab="campanhas" onclick="showTab('campanhas')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Campanhas & ROAS
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Sistema</div>
+      <div class="nav-item" data-tab="config" onclick="showTab('config')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+        Configurações
+      </div>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-box" onclick="doLogout()">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div>
+        <div class="user-name" id="user-name">—</div>
+        <div class="user-role">Sair ↗</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <span style="font-size:10px;color:var(--green)"><span class="rt-dot"></span>Tempo real</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbar-date"></span>
+      <button class="btn btn-primary" onclick="openModalLead()">
+        <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo Lead
+      </button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-pane active">
+      <div class="kpi-grid" id="kpi-grid"><div class="page-loading"><div class="spinner-lg"></div></div></div>
+      <div class="charts-grid">
+        <div class="chart-card">
+          <div class="chart-head">
+            <div><div class="chart-title">Leads por Mês</div><div class="chart-sub">Leads vs Convertidos</div></div>
+            <select class="fsel" id="chart-year" onchange="renderCharts()"></select>
+          </div>
+          <canvas id="chartLeads" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+          <div class="chart-head">
+            <div><div class="chart-title">Origem dos Leads</div><div class="chart-sub">Por canal de aquisição</div></div>
+          </div>
+          <canvas id="chartOrigens" height="200"></canvas>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase">Funil de Conversão</div>
+          <div style="font-size:11px;color:var(--gray);margin-top:2px">Clique para filtrar leads por estágio</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="clearFunnelFilter()">Limpar filtro</button>
+      </div>
+      <div class="funnel-grid" id="funnel-grid"></div>
+      <div class="chart-card">
+        <div class="chart-head">
+          <div><div class="chart-title">Receita vs Investimento em Ads</div><div class="chart-sub">Análise mensal de ROAS</div></div>
+        </div>
+        <canvas id="chartROAS" height="110"></canvas>
+      </div>
+    </div>
+
+    <!-- LEADS -->
+    <div id="tab-leads" class="tab-pane">
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="search-box">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Buscar nome, telefone, endereço..." id="search-leads" oninput="debounceRenderLeads()">
+          </div>
+          <select class="fsel" id="filter-status" onchange="renderLeadsTable()">
+            <option value="">Todos os status</option>
+            <option value="novo">Novo</option>
+            <option value="contato">Em contato</option>
+            <option value="agendado">Agendado</option>
+            <option value="convertido">Convertido</option>
+            <option value="perdido">Perdido</option>
+          </select>
+          <select class="fsel" id="filter-origem" onchange="renderLeadsTable()">
+            <option value="">Todas origens</option>
+            <option value="facebook_ads">Facebook Ads</option>
+            <option value="google_ads">Google Ads</option>
+            <option value="instagram">Instagram</option>
+            <option value="organico">Orgânico</option>
+            <option value="indicacao">Indicação</option>
+            <option value="direto">Direto</option>
+          </select>
+          <select class="fsel" id="filter-mes" onchange="renderLeadsTable()">
+            <option value="">Todos os meses</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()" style="margin-left:auto">↓ CSV</button>
+        </div>
+        <div id="leads-table-area">
+          <div class="page-loading"><div class="spinner-lg"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AGENDAMENTOS -->
+    <div id="tab-agendamentos" class="tab-pane">
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:16px;align-items:start">
+        <div class="cal-wrap">
+          <div class="cal-head">
+            <div style="display:flex;align-items:center;gap:10px">
+              <button class="btn btn-ghost btn-sm" onclick="calNav(-1)">←</button>
+              <div class="cal-month" id="cal-month-label"></div>
+              <button class="btn btn-ghost btn-sm" onclick="calNav(1)">→</button>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="calGoToday()">Hoje</button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+        <div>
+          <div class="chart-card" style="margin-bottom:14px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;margin-bottom:12px">Agenda do Dia</div>
+            <div id="agenda-dia"></div>
+          </div>
+          <div class="chart-card">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;margin-bottom:12px">Próximos 7 dias</div>
+            <div id="agenda-semana"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAMPANHAS -->
+    <div id="tab-campanhas" class="tab-pane">
+      <div class="roas-box">
+        <div class="roas-box-title">Calculadora ROAS / ROI</div>
+        <div class="roas-inputs">
+          <div class="fg" style="margin:0"><label>Investimento (R$)</label><input type="number" id="calc-invest" placeholder="0" oninput="calcRoas()"></div>
+          <div class="fg" style="margin:0"><label>Receita Gerada (R$)</label><input type="number" id="calc-receita" placeholder="0" oninput="calcRoas()"></div>
+          <div class="fg" style="margin:0"><label>Período</label>
+            <select id="calc-periodo" onchange="calcRoasPeriodo()">
+              <option value="">Manual</option>
+              <option value="mes">Mês atual (auto)</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="calcRoas()">Calcular</button>
+        </div>
+        <div class="roas-result" id="roas-result">
+          <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-bottom:3px">ROAS</div><div class="roas-num" id="roas-val">—</div></div>
+          <div style="width:1px;height:36px;background:var(--border)"></div>
+          <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-bottom:3px">ROI</div><div class="roas-num" id="roi-val">—</div></div>
+          <div style="width:1px;height:36px;background:var(--border)"></div>
+          <div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-bottom:3px">Lucro Líquido</div><div class="roas-num" id="lucro-val" style="color:var(--white)">—</div></div>
+          <div style="margin-left:auto;font-size:11px;color:var(--gray);max-width:160px" id="roas-interp"></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:700;text-transform:uppercase">Campanhas</div>
+        <button class="btn btn-primary" onclick="openModalCampanha()">+ Nova Campanha</button>
+      </div>
+      <div class="camp-grid" id="camp-grid"><div class="page-loading"><div class="spinner-lg"></div></div></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div id="tab-config" class="tab-pane">
+      <div class="cfg-section">
+        <h3>Dados do Negócio</h3>
+        <div class="form-row" style="margin-bottom:12px">
+          <div class="fg"><label>Nome do Negócio</label><input id="cfg-nome" type="text"></div>
+          <div class="fg"><label>WhatsApp</label><input id="cfg-wpp" type="text"></div>
+        </div>
+        <div class="form-row">
+          <div class="fg"><label>Cidade</label><input id="cfg-cidade" type="text"></div>
+          <div class="fg"><label>Ticket Médio (R$)</label><input id="cfg-ticket" type="number"></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveConfig()">Salvar</button>
+      </div>
+      <div class="cfg-section">
+        <h3>Metas Mensais</h3>
+        <div class="form-row">
+          <div class="fg"><label>Meta de Leads</label><input id="cfg-meta-leads" type="number"></div>
+          <div class="fg"><label>Meta de Conversões</label><input id="cfg-meta-conv" type="number"></div>
+          <div class="fg"><label>Meta de Receita (R$)</label><input id="cfg-meta-receita" type="number"></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveConfig()">Salvar Metas</button>
+      </div>
+      <div class="cfg-section">
+        <h3>Dados & Exportação</h3>
+        <div class="cfg-row">
+          <div><div class="cfg-row-lbl">Exportar todos os leads</div><div class="cfg-row-sub">Download CSV com todos os dados</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">Exportar CSV</button>
+        </div>
+        <div class="cfg-row">
+          <div><div class="cfg-row-lbl">Importar leads do site</div><div class="cfg-row-sub">Sincroniza leads capturados pelo formulário do site (localStorage)</div></div>
+          <button class="btn btn-ghost btn-sm" onclick="importFromSite()">Sincronizar Site</button>
+        </div>
+        <div class="cfg-row">
+          <div><div class="cfg-row-lbl" style="color:var(--red)">Excluir TODOS os leads</div><div class="cfg-row-sub">Irreversível. Use com cuidado.</div></div>
+          <button class="btn btn-danger btn-sm" onclick="deleteAllLeads()">Excluir tudo</button>
+        </div>
+      </div>
+      <div class="cfg-section">
+        <h3>Integração com o Site</h3>
+        <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Cole este bloco no seu site (antes do &lt;/body&gt;) para capturar leads automaticamente com UTM:</p>
+        <div style="background:var(--dark2);border-radius:7px;padding:14px;overflow-x:auto">
+          <pre id="site-code" style="font-size:10px;color:#4ADE80;line-height:1.7;white-space:pre-wrap"></pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<!-- MODAL LEAD -->
+<div class="overlay" id="modal-lead">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-lead-title">Novo Lead</div>
+      <button class="modal-close" onclick="closeModal('modal-lead')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="l-id">
+      <div class="form-row">
+        <div class="fg"><label>Nome *</label><input id="l-nome" type="text" placeholder="Nome do cliente"></div>
+        <div class="fg"><label>Telefone *</label><input id="l-telefone" type="text" placeholder="(66) 9 9999-9999"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Origem *</label>
+          <select id="l-origem">
+            <option value="">Selecione</option>
+            <option value="facebook_ads">Facebook Ads</option>
+            <option value="google_ads">Google Ads</option>
+            <option value="instagram">Instagram</option>
+            <option value="organico">Orgânico</option>
+            <option value="indicacao">Indicação</option>
+            <option value="direto">Direto / WhatsApp</option>
+          </select>
+        </div>
+        <div class="fg"><label>Campanha (UTM)</label><input id="l-campanha" type="text" placeholder="ex: cacamba_sinop"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Tipo de Serviço</label>
+          <select id="l-tipo">
+            <option value="">Selecione</option>
+            <option value="Remoção de entulho">Remoção de entulho</option>
+            <option value="Reforma residencial">Reforma residencial</option>
+            <option value="Obra nova">Obra nova</option>
+            <option value="Limpeza de terreno">Limpeza de terreno</option>
+            <option value="Descarte de móveis">Descarte de móveis</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+        <div class="fg"><label>Volume</label>
+          <select id="l-volume">
+            <option value="">Não sei ainda</option>
+            <option value="1 caçamba">1 caçamba</option>
+            <option value="2 caçambas">2 caçambas</option>
+            <option value="3+ caçambas">3+ caçambas</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label>Endereço / Bairro</label><input id="l-endereco" type="text" placeholder="Rua, bairro ou referência"></div>
+      <div class="form-row">
+        <div class="fg"><label>Status</label>
+          <select id="l-status">
+            <option value="novo">Novo</option>
+            <option value="contato">Em contato</option>
+            <option value="agendado">Agendado</option>
+            <option value="convertido">Convertido</option>
+            <option value="perdido">Perdido</option>
+          </select>
+        </div>
+        <div class="fg"><label>Valor fechado (R$)</label><div class="prefix"><input id="l-valor" type="number" placeholder="0"></div></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Data de entrada</label><input id="l-data" type="date"></div>
+        <div class="fg"><label>Data agendamento</label><input id="l-data-agend" type="date"></div>
+      </div>
+      <div class="fg"><label>Observações</label><textarea id="l-obs" placeholder="Notas internas..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-lead')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-lead" onclick="saveLead()">
+        <span id="btn-save-lead-txt">Salvar Lead</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CAMPANHA -->
+<div class="overlay" id="modal-campanha">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modal-camp-title">Nova Campanha</div>
+      <button class="modal-close" onclick="closeModal('modal-campanha')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="c-id">
+      <div class="form-row">
+        <div class="fg"><label>Nome da Campanha *</label><input id="c-nome" type="text" placeholder="Black Friday Sinop"></div>
+        <div class="fg"><label>Plataforma</label>
+          <select id="c-plat">
+            <option value="facebook">Facebook Ads</option>
+            <option value="google">Google Ads</option>
+            <option value="instagram">Instagram Ads</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Início</label><input id="c-inicio" type="date"></div>
+        <div class="fg"><label>Fim</label><input id="c-fim" type="date"></div>
+      </div>
+      <div class="form-row">
+        <div class="fg"><label>Investimento (R$)</label><div class="prefix"><input id="c-invest" type="number" placeholder="0"></div></div>
+        <div class="fg"><label>UTM Campaign</label><input id="c-utm" type="text" placeholder="black_friday_sinop"></div>
+      </div>
+      <div class="fg"><label>Status</label>
+        <select id="c-status">
+          <option value="ativa">Ativa</option>
+          <option value="inativa">Encerrada</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-campanha')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-save-camp" onclick="saveCampanha()">
+        <span id="btn-save-camp-txt">Salvar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL PANEL -->
+<div class="detail-panel" id="detail-panel">
+  <div class="panel-head">
+    <div class="panel-title" id="panel-nome">—</div>
+    <button class="modal-close" onclick="closePanel()">×</button>
+  </div>
+  <div class="panel-body" id="panel-body"></div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<!-- SCRIPTS -->
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+'use strict'
+
+// ── CONFIG & CLIENT ──────────────────────────────────────────
+const cfg = window.KADOSH_CONFIG
+const sb  = supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey)
+
+// ── AUTH GUARD ───────────────────────────────────────────────
+let currentUser = null
+
+async function checkAuth(){
+  const { data: { session }, error } = await sb.auth.getSession()
+  if(!session){ window.location.href = 'login.html'; return false }
+  currentUser = session.user
+  const nome = currentUser.user_metadata?.nome || currentUser.email?.split('@')[0] || 'Admin'
+  document.getElementById('user-name').textContent = nome
+  document.getElementById('user-avatar').textContent = nome[0].toUpperCase()
+  return true
+}
+
+async function doLogout(){
+  if(!confirm('Deseja sair do CRM?')) return
+  await sb.auth.signOut()
+  window.location.href = 'login.html'
+}
+
+// ── DB LAYER (async) ─────────────────────────────────────────
+const DB = {
+  async getLeads(filters = {}){
+    let q = sb.from('leads').select('*')
+    if(filters.status) q = q.eq('status', filters.status)
+    if(filters.origem) q = q.eq('origem', filters.origem)
+    if(filters.mes)    q = q.gte('data_entrada', filters.mes + '-01')
+                           .lt('data_entrada', nextMonthStr(filters.mes))
+    if(filters.search){
+      const s = filters.search
+      q = q.or(`nome.ilike.%${s}%,telefone.ilike.%${s}%,endereco.ilike.%${s}%`)
+    }
+    const { data, error } = await q.order('created_at', { ascending: false }).limit(500)
+    if(error) throw error
+    return (data || []).map(mapLead)
+  },
+
+  async getLead(id){
+    const { data, error } = await sb.from('leads').select('*').eq('id', id).single()
+    if(error) throw error
+    return mapLead(data)
+  },
+
+  async createLead(payload){
+    const row = leadToRow(payload)
+    const { data, error } = await sb.from('leads').insert(row).select().single()
+    if(error) throw error
+    await sb.from('historico_lead').insert({ lead_id: data.id, tipo: 'criado', texto: 'Lead cadastrado' })
+    return mapLead(data)
+  },
+
+  async updateLead(id, payload){
+    const oldLead = await this.getLead(id)
+    const row = leadToRow(payload)
+    const { data, error } = await sb.from('leads').update(row).eq('id', id).select().single()
+    if(error) throw error
+    if(oldLead.status !== payload.status){
+      await sb.from('historico_lead').insert({ lead_id: id, tipo: 'status', texto: `Status: ${oldLead.status} → ${payload.status}` })
+    }
+    return mapLead(data)
+  },
+
+  async deleteLead(id){
+    const { error } = await sb.from('leads').delete().eq('id', id)
+    if(error) throw error
+  },
+
+  async getHistorico(leadId){
+    const { data, error } = await sb.from('historico_lead').select('*').eq('lead_id', leadId).order('created_at', { ascending: false })
+    if(error) throw error
+    return data || []
+  },
+
+  async addHistorico(leadId, tipo, texto){
+    const { error } = await sb.from('historico_lead').insert({ lead_id: leadId, tipo, texto })
+    if(error) throw error
+  },
+
+  async updateLeadStatus(id, status){
+    const old = await this.getLead(id)
+    const { error } = await sb.from('leads').update({ status }).eq('id', id)
+    if(error) throw error
+    if(old.status !== status){
+      await sb.from('historico_lead').insert({ lead_id: id, tipo: 'status', texto: `Status: ${old.status} → ${status}` })
+    }
+  },
+
+  async getCampanhas(){
+    const { data, error } = await sb.from('campanhas').select('*').order('created_at', { ascending: false })
+    if(error) throw error
+    return data || []
+  },
+
+  async createCampanha(payload){
+    const { data, error } = await sb.from('campanhas').insert(campToRow(payload)).select().single()
+    if(error) throw error
+    return data
+  },
+
+  async updateCampanha(id, payload){
+    const { data, error } = await sb.from('campanhas').update(campToRow(payload)).eq('id', id).select().single()
+    if(error) throw error
+    return data
+  },
+
+  async deleteCampanha(id){
+    const { error } = await sb.from('campanhas').delete().eq('id', id)
+    if(error) throw error
+  },
+
+  async getConfig(){
+    const { data, error } = await sb.from('configuracoes').select('*')
+    if(error) return {}
+    const cfg = {}
+    ;(data || []).forEach(r => cfg[r.chave] = r.valor)
+    return cfg
+  },
+
+  async saveConfig(obj){
+    const rows = Object.entries(obj).map(([chave, valor]) => ({ chave, valor: String(valor) }))
+    const { error } = await sb.from('configuracoes').upsert(rows, { onConflict: 'chave' })
+    if(error) throw error
+  },
+
+  async getMetrics(){
+    const now = new Date()
+    const { data, error } = await sb.rpc('get_dashboard_metrics', { p_year: now.getFullYear(), p_month: now.getMonth() + 1 })
+    if(error) return null
+    return data
+  }
+}
+
+// ── MAPPERS ──────────────────────────────────────────────────
+function mapLead(row){
+  return {
+    id: row.id,
+    nome: row.nome,
+    telefone: row.telefone,
+    origem: row.origem,
+    campanha: row.campanha,
+    tipo: row.tipo,
+    volume: row.volume,
+    endereco: row.endereco,
+    obs: row.obs,
+    status: row.status,
+    valor: parseFloat(row.valor) || 0,
+    data: row.data_entrada,
+    dataAgendamento: row.data_agendamento,
+    criadoEm: row.created_at,
+    atualizadoEm: row.updated_at,
+  }
+}
+
+function leadToRow(l){
+  return {
+    nome: l.nome,
+    telefone: l.telefone || null,
+    origem: l.origem || 'direto',
+    campanha: l.campanha || null,
+    tipo: l.tipo || null,
+    volume: l.volume || null,
+    endereco: l.endereco || null,
+    obs: l.obs || null,
+    status: l.status || 'novo',
+    valor: parseFloat(l.valor) || 0,
+    data_entrada: l.data || new Date().toISOString().slice(0, 10),
+    data_agendamento: l.dataAgendamento || null,
+  }
+}
+
+function campToRow(c){
+  return {
+    nome: c.nome,
+    plataforma: c.plataforma || 'facebook',
+    inicio: c.inicio || null,
+    fim: c.fim || null,
+    invest: parseFloat(c.invest) || 0,
+    utm: c.utm || null,
+    status: c.status || 'ativa',
+  }
+}
+
+function nextMonthStr(ym){
+  const [y, m] = ym.split('-').map(Number)
+  const d = new Date(y, m, 1)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+// ── HELPERS (UI) ─────────────────────────────────────────────
+const fmtMoney = v => new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(v || 0)
+const fmtDate  = s => { if(!s) return '—'; const [y,m,d] = s.split('-'); return `${d}/${m}/${y}` }
+const fmtDt    = s => { if(!s) return '—'; const d = new Date(s); return d.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) }
+
+const STATUS_LABEL = { novo:'Novo', contato:'Em contato', agendado:'Agendado', convertido:'Convertido', perdido:'Perdido' }
+const ORIGEM_LABEL = { facebook_ads:'Facebook Ads', google_ads:'Google Ads', instagram:'Instagram', organico:'Orgânico', indicacao:'Indicação', direto:'Direto' }
+
+function statusBadge(s){ return `<span class="badge badge-${s}">${STATUS_LABEL[s] || s}</span>` }
+function origemTag(o){
+  return `<span class="origem-tag"><span class="sdot sdot-${o}"></span>${ORIGEM_LABEL[o] || o}</span>`
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function toast(msg, type = 'success'){
+  const wrap = document.getElementById('toasts')
+  const t = document.createElement('div')
+  t.className = `toast ${type}`
+  t.innerHTML = `<span>${{ success:'✓', error:'✕', info:'ℹ' }[type] || '✓'}</span> ${msg}`
+  wrap.appendChild(t)
+  requestAnimationFrame(() => t.classList.add('show'))
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300) }, 3000)
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────
+const TAB_TITLES = { dashboard:'Dashboard', leads:'Gestão de Leads', agendamentos:'Agendamentos', campanhas:'Campanhas & ROAS', config:'Configurações' }
+let currentTab = 'dashboard'
+let funnelFilter = null
+
+async function showTab(tab){
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'))
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'))
+  document.getElementById('tab-' + tab).classList.add('active')
+  document.querySelector(`.nav-item[data-tab="${tab}"]`).classList.add('active')
+  document.getElementById('topbar-title').textContent = TAB_TITLES[tab]
+  currentTab = tab
+  closePanel()
+  if(tab === 'dashboard')    await renderDashboard()
+  if(tab === 'leads')        await renderLeadsTable()
+  if(tab === 'agendamentos') await renderCalendar()
+  if(tab === 'campanhas')    await renderCampanhas()
+  if(tab === 'config')       await renderConfig()
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+function openModal(id){ document.getElementById(id).classList.add('open') }
+function closeModal(id){ document.getElementById(id).classList.remove('open') }
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    document.querySelectorAll('.overlay.open').forEach(m => m.classList.remove('open'))
+    closePanel()
+  }
+})
+document.querySelectorAll('.overlay').forEach(m => m.addEventListener('click', function(e){ if(e.target === this) this.classList.remove('open') }))
+
+// ── LEAD MODAL ────────────────────────────────────────────────
+function openModalLead(lead = null){
+  document.getElementById('modal-lead-title').textContent = lead ? 'Editar Lead' : 'Novo Lead'
+  document.getElementById('l-id').value = lead?.id || ''
+  document.getElementById('l-nome').value = lead?.nome || ''
+  document.getElementById('l-telefone').value = lead?.telefone || ''
+  document.getElementById('l-origem').value = lead?.origem || ''
+  document.getElementById('l-campanha').value = lead?.campanha || ''
+  document.getElementById('l-tipo').value = lead?.tipo || ''
+  document.getElementById('l-volume').value = lead?.volume || ''
+  document.getElementById('l-endereco').value = lead?.endereco || ''
+  document.getElementById('l-status').value = lead?.status || 'novo'
+  document.getElementById('l-valor').value = lead?.valor || ''
+  document.getElementById('l-data').value = lead?.data || new Date().toISOString().slice(0, 10)
+  document.getElementById('l-data-agend').value = lead?.dataAgendamento || ''
+  document.getElementById('l-obs').value = lead?.obs || ''
+  openModal('modal-lead')
+}
+
+async function saveLead(){
+  const nome = document.getElementById('l-nome').value.trim()
+  const telefone = document.getElementById('l-telefone').value.trim()
+  const origem = document.getElementById('l-origem').value
+  if(!nome){ toast('Informe o nome','error'); return }
+  if(!telefone){ toast('Informe o telefone','error'); return }
+  if(!origem){ toast('Selecione a origem','error'); return }
+
+  const id = document.getElementById('l-id').value
+  const payload = {
+    nome, telefone, origem,
+    campanha: document.getElementById('l-campanha').value.trim(),
+    tipo: document.getElementById('l-tipo').value,
+    volume: document.getElementById('l-volume').value,
+    endereco: document.getElementById('l-endereco').value.trim(),
+    status: document.getElementById('l-status').value,
+    valor: parseFloat(document.getElementById('l-valor').value) || 0,
+    data: document.getElementById('l-data').value,
+    dataAgendamento: document.getElementById('l-data-agend').value,
+    obs: document.getElementById('l-obs').value.trim(),
+  }
+
+  const btn = document.getElementById('btn-save-lead')
+  const txt = document.getElementById('btn-save-lead-txt')
+  btn.disabled = true
+  txt.innerHTML = '<div class="spinner-sm"></div>'
+
+  try {
+    if(id) await DB.updateLead(id, payload)
+    else   await DB.createLead(payload)
+    closeModal('modal-lead')
+    toast(id ? 'Lead atualizado!' : 'Lead cadastrado!')
+    await refreshAll()
+  } catch(e) {
+    toast('Erro ao salvar: ' + e.message, 'error')
+  } finally {
+    btn.disabled = false
+    txt.textContent = 'Salvar Lead'
+  }
+}
+
+async function deleteLead(id){
+  if(!confirm('Remover este lead permanentemente?')) return
+  try {
+    await DB.deleteLead(id)
+    toast('Lead removido', 'info')
+    closePanel()
+    await refreshAll()
+  } catch(e) {
+    toast('Erro: ' + e.message, 'error')
+  }
+}
+
+// ── DETAIL PANEL ──────────────────────────────────────────────
+function closePanel(){ document.getElementById('detail-panel').classList.remove('open') }
+
+async function openPanel(id){
+  document.getElementById('panel-nome').textContent = '...'
+  document.getElementById('panel-body').innerHTML = '<div class="page-loading"><div class="spinner-lg"></div></div>'
+  document.getElementById('detail-panel').classList.add('open')
+
+  const [lead, hist] = await Promise.all([DB.getLead(id), DB.getHistorico(id)])
+  document.getElementById('panel-nome').textContent = lead.nome
+
+  document.getElementById('panel-body').innerHTML = `
+    <div class="ps">
+      <div class="ps-label">Dados do Lead</div>
+      <div class="info-row"><span class="ir-label">Telefone</span><span class="ir-val"><a href="https://wa.me/55${(lead.telefone||'').replace(/\D/g,'')}" target="_blank" style="color:var(--green)">${lead.telefone||'—'}</a></span></div>
+      <div class="info-row"><span class="ir-label">Origem</span><span class="ir-val">${ORIGEM_LABEL[lead.origem]||lead.origem||'—'}</span></div>
+      ${lead.campanha?`<div class="info-row"><span class="ir-label">UTM Campaign</span><span class="ir-val" style="color:var(--orange);font-size:11px">${lead.campanha}</span></div>`:''}
+      <div class="info-row"><span class="ir-label">Serviço</span><span class="ir-val">${lead.tipo||'—'}</span></div>
+      <div class="info-row"><span class="ir-label">Volume</span><span class="ir-val">${lead.volume||'—'}</span></div>
+      <div class="info-row"><span class="ir-label">Endereço</span><span class="ir-val">${lead.endereco||'—'}</span></div>
+      <div class="info-row"><span class="ir-label">Entrada</span><span class="ir-val">${fmtDate(lead.data)}</span></div>
+      <div class="info-row"><span class="ir-label">Agendamento</span><span class="ir-val">${fmtDate(lead.dataAgendamento)}</span></div>
+      <div class="info-row"><span class="ir-label">Valor fechado</span><span class="ir-val" style="color:${lead.valor?'var(--green)':'var(--gray)'}">${lead.valor?fmtMoney(lead.valor):'—'}</span></div>
+    </div>
+    <div class="ps">
+      <div class="ps-label">Atualizar Status</div>
+      <select class="status-sel" onchange="updateStatus('${id}', this.value)">
+        ${['novo','contato','agendado','convertido','perdido'].map(s=>`<option value="${s}" ${lead.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}
+      </select>
+    </div>
+    <div class="ps">
+      <div class="ps-label">Histórico & Notas</div>
+      <div class="timeline">
+        ${hist.length ? hist.map(h=>`
+          <div class="tl-item">
+            <div class="tl-dot ${h.tipo==='nota'?'orange':''}">${h.tipo==='nota'?'✎':h.tipo==='status'?'↑':'✓'}</div>
+            <div><div class="tl-txt">${h.texto}</div><div class="tl-date">${fmtDt(h.created_at)}</div></div>
+          </div>`).join('') : '<div style="color:var(--gray);font-size:12px">Nenhum histórico.</div>'}
+      </div>
+      <div class="nota-form">
+        <input type="text" id="nota-input" placeholder="Adicionar nota..." onkeydown="if(event.key==='Enter') addNota('${id}')">
+        <button class="btn btn-ghost btn-sm" onclick="addNota('${id}')">+</button>
+      </div>
+    </div>
+    <div class="ps" style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="openModalLead(${JSON.stringify(lead).replace(/"/g,'&quot;')})">Editar</button>
+      <a href="https://wa.me/55${(lead.telefone||'').replace(/\D/g,'')}" target="_blank" class="btn btn-success btn-sm">WhatsApp</a>
+      <button class="btn btn-danger btn-sm" onclick="deleteLead('${id}')">Excluir</button>
+    </div>
+  `
+}
+
+async function updateStatus(id, status){
+  try {
+    await DB.updateLeadStatus(id, status)
+    toast(`Status → ${STATUS_LABEL[status]}`)
+    await refreshAll()
+    await openPanel(id)
+  } catch(e) {
+    toast('Erro: ' + e.message, 'error')
+  }
+}
+
+async function addNota(id){
+  const input = document.getElementById('nota-input')
+  if(!input || !input.value.trim()) return
+  try {
+    await DB.addHistorico(id, 'nota', input.value.trim())
+    input.value = ''
+    toast('Nota adicionada')
+    await openPanel(id)
+  } catch(e) {
+    toast('Erro: ' + e.message, 'error')
+  }
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────
+let chartLeadsInst = null, chartOrigensInst = null, chartROASInst = null
+
+async function renderDashboard(){
+  const [metrics, leads, campanhas, appCfg] = await Promise.all([
+    DB.getMetrics(),
+    DB.getLeads(),
+    DB.getCampanhas(),
+    DB.getConfig()
+  ])
+  renderKPIs(metrics, leads, campanhas, appCfg)
+  renderFunnel(metrics)
+  renderCharts(leads, campanhas)
+}
+
+function renderKPIs(metrics, leads, campanhas, appCfg){
+  if(!metrics){ document.getElementById('kpi-grid').innerHTML = '<div style="color:var(--gray);padding:20px">Sem dados.</div>'; return }
+  const tx = metrics.leads_mes > 0 ? ((metrics.conv_mes / metrics.leads_mes) * 100).toFixed(1) : '0.0'
+  const now = new Date()
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`
+  const investEste = campanhas.filter(c => c.inicio?.startsWith(thisMonth)).reduce((s,c) => s + (parseFloat(c.invest)||0), 0)
+  const roas = investEste > 0 ? (metrics.receita_mes / investEste) : null
+  const metaLeads = parseInt(appCfg.meta_leads) || 50
+  const metaConv  = parseInt(appCfg.meta_conv)  || 20
+  const ticket    = metrics.conv_mes > 0 ? (metrics.receita_mes / metrics.conv_mes) : (parseFloat(appCfg.ticket) || 350)
+  document.getElementById('kpi-grid').innerHTML = `
+    <div class="kpi-card orange"><div class="kpi-bg">L</div>
+      <div class="kpi-label">Leads este mês</div>
+      <div class="kpi-val" style="color:var(--orange)">${metrics.leads_mes}</div>
+      <div class="kpi-sub">Meta: ${metaLeads} · Total: ${metrics.total_leads}</div>
+    </div>
+    <div class="kpi-card green"><div class="kpi-bg">C</div>
+      <div class="kpi-label">Conversões</div>
+      <div class="kpi-val" style="color:var(--green)">${metrics.conv_mes}</div>
+      <div class="kpi-sub">Taxa: ${tx}% · Meta: ${metaConv}</div>
+    </div>
+    <div class="kpi-card yellow"><div class="kpi-bg">R$</div>
+      <div class="kpi-label">Receita este mês</div>
+      <div class="kpi-val" style="color:var(--yellow);font-size:22px">${fmtMoney(metrics.receita_mes)}</div>
+      <div class="kpi-sub">Ticket médio: ${fmtMoney(ticket)}</div>
+    </div>
+    <div class="kpi-card purple"><div class="kpi-bg">R</div>
+      <div class="kpi-label">ROAS do mês</div>
+      <div class="kpi-val" style="color:${roas===null?'var(--gray)':roas>=3?'var(--green)':'var(--yellow)'}">${roas===null?'—':roas.toFixed(2)+'x'}</div>
+      <div class="kpi-sub">${investEste>0?'Investimento: '+fmtMoney(investEste):'Sem campanha este mês'}</div>
+    </div>
+  `
+  updateBadge(metrics.por_status?.novo || 0)
+}
+
+function updateBadge(count){
+  const b = document.getElementById('badge-leads')
+  b.textContent = count
+  b.style.display = count > 0 ? '' : 'none'
+}
+
+function renderFunnel(metrics){
+  if(!metrics){ document.getElementById('funnel-grid').innerHTML = ''; return }
+  const ps = metrics.por_status || {}
+  const total = metrics.total_leads || 1
+  const stages = ['novo','contato','agendado','convertido','perdido']
+  document.getElementById('funnel-grid').innerHTML = stages.map(s => {
+    const count = ps[s] || 0
+    const pct = ((count / total) * 100).toFixed(0)
+    return `<div class="funnel-stage stage-${s} ${funnelFilter===s?'active-filter':''}" onclick="setFunnelFilter('${s}')">
+      <div class="f-count">${count}</div>
+      <div class="f-label">${STATUS_LABEL[s]}</div>
+      <div class="f-pct">${pct}%</div>
+    </div>`
+  }).join('')
+}
+
+function setFunnelFilter(s){
+  funnelFilter = funnelFilter === s ? null : s
+  renderFunnel({ por_status: {}, total_leads: 0 }) // rerender funnel active state
+  showTab('leads').then(() => {
+    document.getElementById('filter-status').value = funnelFilter || ''
+    renderLeadsTable()
+  })
+}
+function clearFunnelFilter(){ funnelFilter = null; renderDashboard() }
+
+function renderCharts(leads, campanhas){
+  const yearSel = document.getElementById('chart-year')
+  const years = [...new Set(leads.map(l => l.data?.slice(0,4)).filter(Boolean))]
+  years.push(String(new Date().getFullYear()))
+  const uniq = [...new Set(years)].sort().reverse()
+  if(!yearSel.options.length) uniq.forEach(y => { const o = document.createElement('option'); o.value=y; o.textContent=y; yearSel.appendChild(o) })
+  const selYear = yearSel.value || String(new Date().getFullYear())
+
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+  const leadsPerMonth  = months.map((_,i) => leads.filter(l => l.data?.startsWith(`${selYear}-${String(i+1).padStart(2,'0')}`)).length)
+  const convPerMonth   = months.map((_,i) => leads.filter(l => l.data?.startsWith(`${selYear}-${String(i+1).padStart(2,'0')}`) && l.status==='convertido').length)
+  const investPerMonth = months.map((_,i) => campanhas.filter(c => c.inicio?.startsWith(`${selYear}-${String(i+1).padStart(2,'0')}`)).reduce((s,c)=>s+(parseFloat(c.invest)||0),0))
+  const receitaPerMonth= months.map((_,i) => leads.filter(l => l.data?.startsWith(`${selYear}-${String(i+1).padStart(2,'0')}`) && l.status==='convertido').reduce((s,l)=>s+(l.valor||0),0))
+
+  const origemKeys = ['facebook_ads','google_ads','instagram','organico','indicacao','direto']
+  const origemCounts = origemKeys.map(k => leads.filter(l => l.origem === k).length)
+  const origemColors = ['#1877F2','#EA4335','#E1306C','#22C55E','#F59E0B','#888']
+
+  const chartOpts = { responsive:true, plugins:{ legend:{ labels:{ color:'#888', font:{ family:'Barlow' }, boxWidth:10 } } }, scales:{ x:{ grid:{ color:'rgba(255,255,255,.04)' }, ticks:{ color:'#888' } }, y:{ grid:{ color:'rgba(255,255,255,.04)' }, ticks:{ color:'#888' } } } }
+
+  if(chartLeadsInst)  chartLeadsInst.destroy()
+  chartLeadsInst = new Chart(document.getElementById('chartLeads'), {
+    type:'bar', data:{ labels:months, datasets:[
+      { label:'Leads', data:leadsPerMonth, backgroundColor:'rgba(245,130,32,.7)', borderRadius:3 },
+      { label:'Convertidos', data:convPerMonth, backgroundColor:'rgba(34,197,94,.7)', borderRadius:3 }
+    ]}, options:chartOpts
+  })
+
+  if(chartOrigensInst) chartOrigensInst.destroy()
+  chartOrigensInst = new Chart(document.getElementById('chartOrigens'), {
+    type:'doughnut', data:{ labels:Object.values(ORIGEM_LABEL), datasets:[{ data:origemCounts, backgroundColor:origemColors, borderWidth:0, hoverOffset:8 }] },
+    options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{ color:'#888', font:{ family:'Barlow' }, padding:12, boxWidth:10 } } } }
+  })
+
+  if(chartROASInst) chartROASInst.destroy()
+  chartROASInst = new Chart(document.getElementById('chartROAS'), {
+    type:'bar', data:{ labels:months, datasets:[
+      { label:'Receita (R$)', data:receitaPerMonth, backgroundColor:'rgba(34,197,94,.7)', borderRadius:3 },
+      { label:'Investimento Ads (R$)', data:investPerMonth, backgroundColor:'rgba(245,130,32,.5)', borderRadius:3 }
+    ]}, options:{ ...chartOpts, scales:{ ...chartOpts.scales, y:{ ...chartOpts.scales.y, ticks:{ color:'#888', callback: v => 'R$'+v.toLocaleString('pt-BR') } } } }
+  })
+}
+
+// ── LEADS TABLE ───────────────────────────────────────────────
+let _debounceTimer = null
+function debounceRenderLeads(){ clearTimeout(_debounceTimer); _debounceTimer = setTimeout(renderLeadsTable, 350) }
+
+async function renderLeadsTable(){
+  document.getElementById('leads-table-area').innerHTML = '<div class="page-loading"><div class="spinner-lg"></div></div>'
+  const filters = {
+    status: document.getElementById('filter-status')?.value || '',
+    origem: document.getElementById('filter-origem')?.value || '',
+    mes:    document.getElementById('filter-mes')?.value || '',
+    search: document.getElementById('search-leads')?.value?.trim() || '',
+  }
+  Object.keys(filters).forEach(k => { if(!filters[k]) delete filters[k] })
+
+  const leads = await DB.getLeads(filters)
+  populateMonthFilter(leads)
+
+  if(!leads.length){
+    document.getElementById('leads-table-area').innerHTML = `<div class="empty-state"><div style="font-size:40px;opacity:.25">📋</div><strong>Nenhum lead encontrado</strong><p>Adicione o primeiro lead ou ajuste os filtros.</p></div>`
+    return
+  }
+  document.getElementById('leads-table-area').innerHTML = `
+    <table>
+      <thead><tr>
+        <th>Nome</th><th>Telefone</th><th>Origem</th><th>Serviço</th><th>Status</th><th>Valor</th><th>Data</th><th>Ações</th>
+      </tr></thead>
+      <tbody>${leads.map(l => `
+        <tr onclick="openPanel('${l.id}')">
+          <td class="bold">${l.nome}</td>
+          <td><a href="https://wa.me/55${(l.telefone||'').replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" style="color:var(--green)">${l.telefone||'—'}</a></td>
+          <td>${origemTag(l.origem)}</td>
+          <td>${l.tipo||'—'}</td>
+          <td>${statusBadge(l.status)}</td>
+          <td style="color:${l.valor?'var(--green)':'var(--gray)'}">${l.valor?fmtMoney(l.valor):'—'}</td>
+          <td>${fmtDate(l.data)}</td>
+          <td onclick="event.stopPropagation()">
+            <div style="display:flex;gap:5px">
+              <button class="btn btn-ghost btn-sm" onclick="openModalLead(${JSON.stringify(l).replace(/"/g,'&quot;')})">Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteLead('${l.id}')">✕</button>
+            </div>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`
+}
+
+function populateMonthFilter(leads){
+  const sel = document.getElementById('filter-mes')
+  if(sel.options.length > 1) return
+  const months = [...new Set(leads.map(l => l.data?.slice(0,7)).filter(Boolean))].sort().reverse()
+  const names = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+  months.forEach(m => {
+    const [y,mo] = m.split('-')
+    const o = document.createElement('option'); o.value = m; o.textContent = `${names[parseInt(mo)-1]}/${y}`; sel.appendChild(o)
+  })
+}
+
+// ── CALENDAR ──────────────────────────────────────────────────
+let calYear = new Date().getFullYear(), calMonth = new Date().getMonth()
+
+async function renderCalendar(){
+  const leads = await DB.getLeads()
+  const agendados = leads.filter(l => l.dataAgendamento)
+  const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+  document.getElementById('cal-month-label').textContent = `${months[calMonth]} ${calYear}`
+  const today = new Date()
+  const todayStr = today.toISOString().slice(0,10)
+  const firstDay = new Date(calYear, calMonth, 1)
+  const lastDay  = new Date(calYear, calMonth+1, 0)
+
+  let html = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d => `<div class="cal-day-name">${d}</div>`).join('')
+  for(let i=0; i<firstDay.getDay(); i++){
+    const d = new Date(calYear, calMonth, -firstDay.getDay()+i+1)
+    html += `<div class="cal-day other-month"><div class="day-num">${d.getDate()}</div></div>`
+  }
+  for(let d=1; d<=lastDay.getDate(); d++){
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`
+    const dayLeads = agendados.filter(l => l.dataAgendamento === ds)
+    html += `<div class="cal-day ${ds===todayStr?'today':''}" onclick="calDayClick('${ds}')">
+      <div class="day-num">${d}</div>
+      ${dayLeads.map(l=>`<div class="cal-event s-${l.status}" title="${l.nome}">${l.nome}</div>`).join('')}
+    </div>`
+  }
+  document.getElementById('cal-grid').innerHTML = html
+  renderAgendaDia(agendados, todayStr)
+  renderAgendaSemana(agendados)
+}
+
+function calDayClick(ds){
+  DB.getLeads().then(leads => {
+    const agendados = leads.filter(l => l.dataAgendamento)
+    renderAgendaDia(agendados, ds)
+  })
+}
+function calNav(dir){ calMonth += dir; if(calMonth>11){calMonth=0;calYear++} if(calMonth<0){calMonth=11;calYear--} renderCalendar() }
+function calGoToday(){ calYear=new Date().getFullYear(); calMonth=new Date().getMonth(); renderCalendar() }
+
+function renderAgendaDia(agendados, ds){
+  const day = agendados.filter(l => l.dataAgendamento === ds)
+  const el = document.getElementById('agenda-dia')
+  el.innerHTML = day.length
+    ? day.map(l=>`<div style="background:var(--dark2);border-radius:7px;padding:10px;border-left:3px solid var(--orange);cursor:pointer;margin-bottom:7px" onclick="openPanel('${l.id}')">
+        <div style="font-weight:600;font-size:13px">${l.nome}</div>
+        <div style="font-size:11px;color:var(--gray)">${l.tipo||'—'} · ${l.endereco||'—'}</div>
+        <div style="margin-top:5px">${statusBadge(l.status)}</div>
+      </div>`).join('')
+    : `<div style="color:var(--gray);font-size:12px;text-align:center;padding:10px">Sem agendamentos</div>`
+}
+
+function renderAgendaSemana(agendados){
+  const today = new Date()
+  const next7 = []
+  for(let i=0; i<7; i++){
+    const d = new Date(today); d.setDate(today.getDate()+i)
+    const ds = d.toISOString().slice(0,10)
+    agendados.filter(l => l.dataAgendamento===ds).forEach(l => next7.push({ ...l, _ds:ds }))
+  }
+  const el = document.getElementById('agenda-semana')
+  el.innerHTML = next7.length
+    ? next7.map(l=>`<div style="display:flex;align-items:center;gap:9px;padding:7px;background:var(--dark2);border-radius:6px;cursor:pointer;margin-bottom:5px" onclick="openPanel('${l.id}')">
+        <div style="text-align:center;min-width:32px">
+          <div style="font-size:9px;color:var(--gray)">${['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(l._ds+'T12:00').getDay()]}</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;color:var(--orange)">${new Date(l._ds+'T12:00').getDate()}</div>
+        </div>
+        <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.nome}</div><div style="font-size:10px;color:var(--gray)">${l.tipo||'—'}</div></div>
+        ${statusBadge(l.status)}
+      </div>`).join('')
+    : `<div style="color:var(--gray);font-size:12px;text-align:center;padding:10px">Sem agendamentos</div>`
+}
+
+// ── CAMPANHAS ─────────────────────────────────────────────────
+function openModalCampanha(c = null){
+  document.getElementById('modal-camp-title').textContent = c ? 'Editar Campanha' : 'Nova Campanha'
+  document.getElementById('c-id').value = c?.id || ''
+  document.getElementById('c-nome').value = c?.nome || ''
+  document.getElementById('c-plat').value = c?.plataforma || 'facebook'
+  document.getElementById('c-inicio').value = c?.inicio || ''
+  document.getElementById('c-fim').value = c?.fim || ''
+  document.getElementById('c-invest').value = c?.invest || ''
+  document.getElementById('c-utm').value = c?.utm || ''
+  document.getElementById('c-status').value = c?.status || 'ativa'
+  openModal('modal-campanha')
+}
+
+async function saveCampanha(){
+  const nome = document.getElementById('c-nome').value.trim()
+  if(!nome){ toast('Informe o nome da campanha','error'); return }
+  const id = document.getElementById('c-id').value
+  const payload = {
+    nome,
+    plataforma: document.getElementById('c-plat').value,
+    inicio: document.getElementById('c-inicio').value,
+    fim: document.getElementById('c-fim').value,
+    invest: parseFloat(document.getElementById('c-invest').value) || 0,
+    utm: document.getElementById('c-utm').value.trim(),
+    status: document.getElementById('c-status').value,
+  }
+  const btn = document.getElementById('btn-save-camp')
+  const txt = document.getElementById('btn-save-camp-txt')
+  btn.disabled = true; txt.innerHTML = '<div class="spinner-sm"></div>'
+  try {
+    if(id) await DB.updateCampanha(id, payload)
+    else   await DB.createCampanha(payload)
+    closeModal('modal-campanha')
+    toast(id ? 'Campanha atualizada!' : 'Campanha cadastrada!')
+    await renderCampanhas()
+  } catch(e) {
+    toast('Erro: ' + e.message, 'error')
+  } finally {
+    btn.disabled = false; txt.textContent = 'Salvar'
+  }
+}
+
+async function deleteCampanha(id){
+  if(!confirm('Remover esta campanha?')) return
+  await DB.deleteCampanha(id)
+  toast('Campanha removida','info')
+  renderCampanhas()
+}
+
+async function renderCampanhas(){
+  document.getElementById('camp-grid').innerHTML = '<div class="page-loading"><div class="spinner-lg"></div></div>'
+  const [campanhas, leads] = await Promise.all([DB.getCampanhas(), DB.getLeads()])
+  const platLabel = { facebook:'Facebook Ads', google:'Google Ads', instagram:'Instagram Ads', outro:'Outro' }
+
+  if(!campanhas.length){
+    document.getElementById('camp-grid').innerHTML = `<div style="grid-column:1/-1"><div class="empty-state"><div style="font-size:40px;opacity:.25">📢</div><strong>Nenhuma campanha</strong><p>Crie uma campanha para rastrear ROAS e ROI.</p></div></div>`
+    return
+  }
+  document.getElementById('camp-grid').innerHTML = campanhas.map(c => {
+    const campLeads = leads.filter(l => l.campanha && l.campanha === c.utm)
+    const campConv  = campLeads.filter(l => l.status === 'convertido')
+    const receita   = campConv.reduce((s,l) => s + (l.valor||0), 0)
+    const roas      = c.invest > 0 ? receita / c.invest : 0
+    const roi       = c.invest > 0 ? ((receita - c.invest) / c.invest * 100) : 0
+    return `<div class="camp-card">
+      <div class="camp-head">
+        <div><div class="camp-name">${c.nome}</div><div class="camp-plat">${platLabel[c.plataforma]||c.plataforma}</div></div>
+        <div class="camp-status-badge ${c.status}"><span class="camp-status-dot"></span>${c.status==='ativa'?'Ativa':'Encerrada'}</div>
+      </div>
+      <div class="camp-metrics">
+        <div class="camp-metric"><div class="cm-label">Investimento</div><div class="cm-val cm-invest">${fmtMoney(c.invest)}</div></div>
+        <div class="camp-metric"><div class="cm-label">Receita</div><div class="cm-val cm-receita">${fmtMoney(receita)}</div></div>
+        <div class="camp-metric"><div class="cm-label">ROAS</div><div class="cm-val cm-roas">${c.invest>0?roas.toFixed(2)+'x':'—'}</div></div>
+        <div class="camp-metric"><div class="cm-label">ROI</div><div class="cm-val cm-roi">${c.invest>0?(roi>0?'+':'')+roi.toFixed(0)+'%':'—'}</div></div>
+      </div>
+      <div style="font-size:11px;color:var(--gray);margin-bottom:10px">${campLeads.length} leads · ${campConv.length} conv.${c.utm?' · UTM: <span style="color:var(--orange-dark)">'+c.utm+'</span>':''}</div>
+      <div style="display:flex;gap:7px">
+        <button class="btn btn-ghost btn-sm" onclick="openModalCampanha(${JSON.stringify(c).replace(/"/g,'&quot;')})">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCampanha('${c.id}')">Excluir</button>
+      </div>
+    </div>`
+  }).join('')
+}
+
+// ── CALCULADORA ROAS ──────────────────────────────────────────
+async function calcRoasPeriodo(){
+  const p = document.getElementById('calc-periodo').value
+  if(p === 'mes'){
+    const now = new Date()
+    const prefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`
+    const [leads, campanhas] = await Promise.all([DB.getLeads(), DB.getCampanhas()])
+    const receita = leads.filter(l => l.status==='convertido' && l.data?.startsWith(prefix)).reduce((s,l) => s+(l.valor||0), 0)
+    const invest  = campanhas.filter(c => c.inicio?.startsWith(prefix)).reduce((s,c) => s+(parseFloat(c.invest)||0), 0)
+    document.getElementById('calc-invest').value  = invest
+    document.getElementById('calc-receita').value = receita
+  }
+  calcRoas()
+}
+
+function calcRoas(){
+  const invest  = parseFloat(document.getElementById('calc-invest').value)  || 0
+  const receita = parseFloat(document.getElementById('calc-receita').value) || 0
+  if(!invest && !receita){ document.getElementById('roas-result').style.display='none'; return }
+  const roas  = invest > 0 ? receita / invest : 0
+  const roi   = invest > 0 ? ((receita - invest) / invest * 100) : 0
+  const lucro = receita - invest
+  const roasEl = document.getElementById('roas-val')
+  roasEl.textContent = invest>0 ? roas.toFixed(2)+'x' : '—'
+  roasEl.className   = 'roas-num ' + (roas>=4?'rn-good':roas>=2?'rn-avg':'rn-bad')
+  document.getElementById('roi-val').textContent   = invest>0 ? (roi>0?'+':'')+roi.toFixed(1)+'%' : '—'
+  document.getElementById('lucro-val').textContent = fmtMoney(lucro)
+  document.getElementById('roas-interp').textContent = roas>=5?'Excelente! R$1 gera R$'+roas.toFixed(0)+' de retorno.':roas>=3?'Bom retorno. Campanha saudável.':roas>=2?'Aceitável. Há espaço para otimizar.':invest>0?'Campanha no prejuízo. Revisar urgente.':''
+  document.getElementById('roas-result').style.display = 'flex'
+}
+
+// ── CONFIG ─────────────────────────────────────────────────────
+async function renderConfig(){
+  const appCfg = await DB.getConfig()
+  document.getElementById('cfg-nome').value        = appCfg.nome        || 'Kadosh Mini Caçambas'
+  document.getElementById('cfg-wpp').value         = appCfg.wpp         || '5566996585048'
+  document.getElementById('cfg-cidade').value      = appCfg.cidade      || 'Sinop - MT'
+  document.getElementById('cfg-ticket').value      = appCfg.ticket      || '350'
+  document.getElementById('cfg-meta-leads').value  = appCfg.meta_leads  || '50'
+  document.getElementById('cfg-meta-conv').value   = appCfg.meta_conv   || '20'
+  document.getElementById('cfg-meta-receita').value= appCfg.meta_receita|| '7000'
+  document.getElementById('site-code').textContent = getSiteCode(appCfg.wpp || '5566996585048')
+}
+
+async function saveConfig(){
+  const obj = {
+    nome:         document.getElementById('cfg-nome').value,
+    wpp:          document.getElementById('cfg-wpp').value,
+    cidade:       document.getElementById('cfg-cidade').value,
+    ticket:       document.getElementById('cfg-ticket').value,
+    meta_leads:   document.getElementById('cfg-meta-leads').value,
+    meta_conv:    document.getElementById('cfg-meta-conv').value,
+    meta_receita: document.getElementById('cfg-meta-receita').value,
+  }
+  try {
+    await DB.saveConfig(obj)
+    toast('Configurações salvas!')
+  } catch(e) {
+    toast('Erro: ' + e.message, 'error')
+  }
+}
+
+function getSiteCode(wpp){
+  const url = cfg.supabaseUrl
+  const key = cfg.supabaseAnonKey
+  return `<!-- Kadosh CRM - Lead Capture | Cole antes do </body> -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"><\/script>
+<script>
+(function(){
+  var sb=supabase.createClient('${url}','${key}');
+  function utm(p){return new URLSearchParams(location.search).get(p)||''}
+  var origemMap={'facebook':'facebook_ads','fb':'facebook_ads','google':'google_ads','instagram':'instagram'};
+  document.querySelector('.form-submit')?.addEventListener('click',async function(){
+    var origemRaw=utm('utm_source');
+    var lead={
+      nome:document.getElementById('f-nome')?.value||'',
+      origem:origemMap[origemRaw]||origemRaw||'direto',
+      campanha:utm('utm_campaign'),
+      utm_medium:utm('utm_medium'),
+      tipo:document.getElementById('f-tipo')?.value||'',
+      volume:document.getElementById('f-volume')?.value||'',
+      endereco:document.getElementById('f-end')?.value||'',
+      data_entrada:new Date().toISOString().slice(0,10),
+      status:'novo',valor:0
+    };
+    await sb.from('leads').insert(lead);
+    await sb.from('historico_lead').insert({lead_id:(await sb.from('leads').select('id').order('created_at',{ascending:false}).limit(1)).data[0]?.id,tipo:'criado',texto:'Lead do site'});
+  });
+})();
+<\/script>`
+}
+
+// ── EXPORT / IMPORT ───────────────────────────────────────────
+async function exportCSV(){
+  const leads = await DB.getLeads()
+  if(!leads.length){ toast('Nenhum lead para exportar','info'); return }
+  const headers = ['ID','Nome','Telefone','Origem','Campanha','Tipo','Volume','Endereço','Status','Valor','Data Entrada','Data Agendamento','Obs']
+  const rows = leads.map(l=>[l.id,l.nome,l.telefone,l.origem,l.campanha,l.tipo,l.volume,l.endereco,l.status,l.valor,l.data,l.dataAgendamento,l.obs].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','))
+  const csv = '﻿'+[headers.join(','),...rows].join('\n')
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}))
+  a.download = `kadosh-leads-${new Date().toISOString().slice(0,10)}.csv`
+  a.click()
+  toast('CSV exportado!')
+}
+
+async function importFromSite(){
+  const raw = localStorage.getItem('kdsh_leads')
+  if(!raw){ toast('Nenhum lead no localStorage do site','info'); return }
+  const siteLeads = JSON.parse(raw)
+  if(!siteLeads.length){ toast('Nenhum lead encontrado no site','info'); return }
+  if(!confirm(`Importar ${siteLeads.length} lead(s) do site para o banco de dados?`)) return
+
+  let count = 0
+  for(const l of siteLeads){
+    try {
+      await DB.createLead({
+        nome: l.nome || 'Lead do site',
+        telefone: l.telefone || '',
+        origem: l.origem || 'direto',
+        campanha: l.campanha || '',
+        tipo: l.tipo || '',
+        volume: l.volume || '',
+        endereco: l.endereco || '',
+        obs: l.obs || '',
+        status: 'novo',
+        valor: 0,
+        data: l.data || new Date().toISOString().slice(0,10),
+        dataAgendamento: '',
+      })
+      count++
+    } catch(e) { /* pula duplicatas */ }
+  }
+  toast(`${count} lead(s) importados!`)
+  await refreshAll()
+}
+
+async function deleteAllLeads(){
+  if(!confirm('ATENÇÃO: Isso vai excluir TODOS os leads do banco. Irreversível!')) return
+  if(!confirm('Tem certeza absoluta?')) return
+  const leads = await DB.getLeads()
+  for(const l of leads){ await DB.deleteLead(l.id) }
+  toast('Todos os leads foram removidos','info')
+  await refreshAll()
+}
+
+// ── REAL-TIME ──────────────────────────────────────────────────
+function setupRealtime(){
+  sb.channel('crm_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'leads' }, () => {
+      refreshAll()
+    })
+    .subscribe()
+}
+
+// ── REFRESH ───────────────────────────────────────────────────
+async function refreshAll(){
+  if(currentTab === 'dashboard')    await renderDashboard()
+  if(currentTab === 'leads')        await renderLeadsTable()
+  if(currentTab === 'agendamentos') await renderCalendar()
+  if(currentTab === 'campanhas')    await renderCampanhas()
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+async function init(){
+  const ok = await checkAuth()
+  if(!ok) return
+  document.getElementById('topbar-date').textContent = new Date().toLocaleDateString('pt-BR',{ weekday:'short', day:'numeric', month:'short', year:'numeric' })
+  await renderDashboard()
+  setupRealtime()
+}
+
+init()
+</script>
+</body>
+</html>

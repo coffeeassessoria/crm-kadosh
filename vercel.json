@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "routes": [
+    { "src": "/login", "dest": "/CRM/login.html" },
+    { "src": "/",      "dest": "/CRM/login.html" },
+    { "src": "/(.*)", "dest": "/CRM/$1" }
+  ]
+}

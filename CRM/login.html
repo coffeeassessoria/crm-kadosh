@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kadosh CRM | Entrar</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--orange:#F58220;--black:#0E0E0E;--dark:#141414;--dark2:#1C1C1C;--dark3:#242424;--border:rgba(255,255,255,0.08);--gray:#888;--gray-light:#BDBDBD;--green:#22C55E;--red:#EF4444}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Barlow',sans-serif;background:var(--black);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.bg-glow{position:absolute;top:-30%;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(245,130,32,0.06) 0%,transparent 65%);pointer-events:none}
+.card{background:var(--dark);border:1px solid var(--border);border-radius:16px;padding:44px 40px;width:100%;max-width:420px;position:relative;z-index:1}
+.logo{display:flex;align-items:center;gap:14px;margin-bottom:36px;justify-content:center}
+.logo-icon{width:44px;height:44px;border-radius:10px;background:var(--orange);display:flex;align-items:center;justify-content:center}
+.logo-text{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;text-transform:uppercase;line-height:1.1}
+.logo-text span{color:var(--orange);font-size:12px;font-weight:600;letter-spacing:0.08em;display:block}
+h1{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:800;text-transform:uppercase;margin-bottom:6px;text-align:center}
+.subtitle{font-size:14px;color:var(--gray);margin-bottom:32px;text-align:center}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:28px}
+.tab-btn{flex:1;padding:10px;background:none;border:none;cursor:pointer;font-family:'Barlow',sans-serif;font-size:14px;font-weight:600;color:var(--gray);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab-btn.active{color:var(--orange);border-bottom-color:var(--orange)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:var(--gray-light);margin-bottom:7px}
+.form-group input{width:100%;background:var(--dark2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;font-size:14px;color:#fff;font-family:'Barlow',sans-serif;outline:none;transition:border-color .15s}
+.form-group input:focus{border-color:var(--orange)}
+.form-group input::placeholder{color:var(--gray)}
+.btn{width:100%;padding:14px;border-radius:8px;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;text-transform:uppercase;letter-spacing:0.04em;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-primary{background:var(--orange);color:var(--black)}
+.btn-primary:hover:not(:disabled){background:#d96e10;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed}
+.error-msg{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:7px;padding:11px 14px;font-size:13px;color:#F87171;margin-bottom:18px;display:none}
+.error-msg.show{display:block}
+.success-msg{background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:7px;padding:11px 14px;font-size:13px;color:#4ADE80;margin-bottom:18px;display:none}
+.success-msg.show{display:block}
+.divider{display:flex;align-items:center;gap:14px;margin:20px 0}
+.divider-line{flex:1;height:1px;background:var(--border)}
+.divider-text{font-size:12px;color:var(--gray)}
+.forgot-link{display:block;text-align:center;font-size:13px;color:var(--gray);margin-top:16px;cursor:pointer;transition:color .15s}
+.forgot-link:hover{color:var(--orange)}
+.spinner{width:18px;height:18px;border:2px solid rgba(0,0,0,0.3);border-top-color:var(--black);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.footer-note{text-align:center;font-size:12px;color:var(--gray);margin-top:28px}
+.footer-note span{color:var(--orange)}
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path fill="#000" d="M3 7h4v14H3zM10 3h4v18h-4zM17 10h4v11h-4z"/></svg>
+    </div>
+    <div class="logo-text">Kadosh CRM<span>Painel de Gestão</span></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('login')">Entrar</button>
+    <button class="tab-btn" onclick="switchTab('signup')">Criar conta</button>
+  </div>
+
+  <!-- LOGIN -->
+  <div class="tab-pane active" id="tab-login">
+    <div class="error-msg" id="login-error"></div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="btn btn-primary" id="btn-login" onclick="doLogin()">
+      <span id="btn-login-text">Entrar no CRM</span>
+    </button>
+    <span class="forgot-link" onclick="showForgot()">Esqueci minha senha</span>
+  </div>
+
+  <!-- SIGNUP -->
+  <div class="tab-pane" id="tab-signup">
+    <div class="error-msg" id="signup-error"></div>
+    <div class="success-msg" id="signup-success"></div>
+    <div class="form-group">
+      <label>Nome completo</label>
+      <input type="text" id="signup-nome" placeholder="Seu nome">
+    </div>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="signup-email" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="signup-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password" onkeydown="if(event.key==='Enter')doSignup()">
+    </div>
+    <button class="btn btn-primary" id="btn-signup" onclick="doSignup()">
+      <span id="btn-signup-text">Criar conta</span>
+    </button>
+  </div>
+
+  <!-- FORGOT -->
+  <div class="tab-pane" id="tab-forgot">
+    <div class="error-msg" id="forgot-error"></div>
+    <div class="success-msg" id="forgot-success"></div>
+    <p style="font-size:14px;color:var(--gray-light);margin-bottom:20px">Informe seu e-mail e enviaremos um link para redefinir sua senha.</p>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="forgot-email" placeholder="seu@email.com">
+    </div>
+    <button class="btn btn-primary" id="btn-forgot" onclick="doForgot()">
+      <span id="btn-forgot-text">Enviar link de recuperação</span>
+    </button>
+    <span class="forgot-link" onclick="switchTab('login')">← Voltar para o login</span>
+  </div>
+
+  <div class="footer-note">Powered by <span>Kadosh</span> © 2025</div>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const cfg = window.KADOSH_CONFIG
+const sb  = supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey)
+
+function switchTab(tab){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', ['login','signup','forgot'][i]===tab))
+  document.querySelectorAll('.tab-pane').forEach((p,i)=>p.classList.toggle('active', ['tab-login','tab-signup','tab-forgot'][i]==='tab-'+tab))
+  clearErrors()
+}
+
+function showForgot(){ switchTab('forgot') }
+
+function clearErrors(){
+  document.querySelectorAll('.error-msg,.success-msg').forEach(el=>{ el.classList.remove('show'); el.textContent='' })
+}
+
+function setLoading(btnId, textId, loading){
+  const btn = document.getElementById(btnId)
+  const txt = document.getElementById(textId)
+  btn.disabled = loading
+  txt.innerHTML = loading ? '<div class="spinner"></div>' : txt.dataset.label || txt.textContent
+}
+
+function showError(id, msg){ const el=document.getElementById(id); el.textContent=msg; el.classList.add('show') }
+function showSuccess(id, msg){ const el=document.getElementById(id); el.textContent=msg; el.classList.add('show') }
+
+async function doLogin(){
+  const email = document.getElementById('login-email').value.trim()
+  const pass  = document.getElementById('login-pass').value
+  if(!email || !pass){ showError('login-error','Preencha e-mail e senha.'); return }
+  setLoading('btn-login','btn-login-text',true)
+  clearErrors()
+  const { error } = await sb.auth.signInWithPassword({ email, password:pass })
+  setLoading('btn-login','btn-login-text',false)
+  if(error){ showError('login-error', translateError(error.message)); return }
+  window.location.href = 'index.html'
+}
+
+async function doSignup(){
+  const nome  = document.getElementById('signup-nome').value.trim()
+  const email = document.getElementById('signup-email').value.trim()
+  const pass  = document.getElementById('signup-pass').value
+  if(!nome || !email || !pass){ showError('signup-error','Preencha todos os campos.'); return }
+  if(pass.length < 6){ showError('signup-error','A senha deve ter no mínimo 6 caracteres.'); return }
+  setLoading('btn-signup','btn-signup-text',true)
+  clearErrors()
+  const { error } = await sb.auth.signUp({ email, password:pass, options:{ data:{ nome } } })
+  setLoading('btn-signup','btn-signup-text',false)
+  if(error){ showError('signup-error', translateError(error.message)); return }
+  showSuccess('signup-success','Conta criada! Verifique seu e-mail para confirmar. Após confirmar, faça login.')
+}
+
+async function doForgot(){
+  const email = document.getElementById('forgot-email').value.trim()
+  if(!email){ showError('forgot-error','Informe seu e-mail.'); return }
+  setLoading('btn-forgot','btn-forgot-text',true)
+  clearErrors()
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/crm/' })
+  setLoading('btn-forgot','btn-forgot-text',false)
+  if(error){ showError('forgot-error', translateError(error.message)); return }
+  showSuccess('forgot-success','Link enviado! Verifique sua caixa de entrada.')
+}
+
+function translateError(msg){
+  if(msg.includes('Invalid login')) return 'E-mail ou senha incorretos.'
+  if(msg.includes('Email not confirmed')) return 'Confirme seu e-mail antes de entrar.'
+  if(msg.includes('User already registered')) return 'Este e-mail já está cadastrado.'
+  if(msg.includes('Password should be')) return 'Senha deve ter no mínimo 6 caracteres.'
+  if(msg.includes('rate limit')) return 'Muitas tentativas. Aguarde alguns minutos.'
+  return msg
+}
+
+// Redirecionar se já estiver logado
+;(async()=>{
+  if(cfg.supabaseUrl.includes('SEU_PROJETO')){ return } // config não preenchida
+  const { data: { session } } = await sb.auth.getSession()
+  if(session) window.location.href = 'index.html'
+})()
+
+document.getElementById('btn-login-text').dataset.label  = 'Entrar no CRM'
+document.getElementById('btn-signup-text').dataset.label = 'Criar conta'
+document.getElementById('btn-forgot-text').dataset.label = 'Enviar link de recuperação'
+</script>
+</body>
+</html>
