@@ -243,6 +243,42 @@ td.bold{font-weight:600;color:var(--white)}
 .rt-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:5px;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
+/* KANBAN */
+.view-toggle{display:flex;gap:0;background:var(--dark2);border-radius:6px;padding:2px}
+.view-btn{padding:6px 16px;border-radius:5px;border:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray);background:transparent;font-family:'Barlow',sans-serif;transition:all .13s;display:flex;align-items:center;gap:6px}
+.view-btn.active{background:var(--dark3);color:var(--white)}
+.kanban-wrap{overflow-x:auto;padding-bottom:10px}
+.kanban-board{display:flex;gap:10px;align-items:flex-start;min-width:900px}
+.kanban-col{background:var(--dark);border:1px solid var(--border);border-radius:10px;width:220px;flex-shrink:0;transition:border-color .15s}
+.kanban-col.drag-over{border-color:var(--orange);background:rgba(245,130,32,.04)}
+.kcol-head{padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;border-top:3px solid transparent;border-radius:10px 10px 0 0}
+.col-novo    .kcol-head{border-top-color:var(--blue)}
+.col-contato .kcol-head{border-top-color:var(--yellow)}
+.col-agendado .kcol-head{border-top-color:var(--purple)}
+.col-convertido .kcol-head{border-top-color:var(--green)}
+.col-perdido .kcol-head{border-top-color:var(--red)}
+.kcol-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase}
+.kcol-count{background:var(--dark3);border-radius:100px;font-size:10px;font-weight:700;padding:2px 8px;color:var(--gray-light)}
+.kcol-cards{padding:8px;display:flex;flex-direction:column;gap:7px;min-height:80px}
+.kcard{background:var(--dark2);border:1px solid var(--border);border-radius:8px;padding:11px;cursor:grab;transition:all .13s;user-select:none}
+.kcard:hover{border-color:rgba(245,130,32,.4);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.kcard.dragging{opacity:.35;cursor:grabbing;transform:scale(.97)}
+.kcard-name{font-weight:600;font-size:13px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kcard-svc{font-size:11px;color:var(--gray);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kcard-foot{display:flex;align-items:center;justify-content:space-between;margin-top:7px}
+.kcard-date{font-size:10px;color:var(--gray)}
+.kcard-val{font-size:11px;font-weight:700;color:var(--green)}
+/* UTM TAGS */
+.utm-pill{display:inline-flex;align-items:center;gap:3px;font-size:9px;background:rgba(245,130,32,.1);border:1px solid rgba(245,130,32,.2);color:var(--orange);padding:2px 7px;border-radius:100px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.utm-pill.medium{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.2);color:#60A5FA}
+.utm-pill.content{background:rgba(139,92,246,.1);border-color:rgba(139,92,246,.2);color:#A78BFA}
+.utm-section{background:var(--dark2);border-radius:8px;padding:12px;margin-bottom:14px}
+.utm-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray);margin-bottom:8px}
+.utm-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.utm-item{background:var(--dark3);border-radius:6px;padding:8px 10px}
+.utm-item-label{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--gray);margin-bottom:3px}
+.utm-item-value{font-size:12px;font-weight:600;color:var(--white)}
+.utm-item-value.empty{color:var(--gray);font-style:italic;font-weight:400}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--dark3);border-radius:10px}
@@ -362,6 +398,48 @@ td.bold{font-weight:600;color:var(--white)}
 
     <!-- LEADS -->
     <div id="tab-leads" class="tab-pane">
+      <!-- Toggle Tabela / Kanban -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div class="view-toggle">
+          <button class="view-btn active" id="btn-view-table" onclick="setLeadsView('table')">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Tabela
+          </button>
+          <button class="view-btn" id="btn-view-kanban" onclick="setLeadsView('kanban')">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="11" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+            Kanban
+          </button>
+        </div>
+        <span id="leads-count" style="font-size:12px;color:var(--gray)"></span>
+      </div>
+
+      <!-- Kanban Board -->
+      <div id="leads-kanban" style="display:none" class="kanban-wrap">
+        <div class="kanban-board">
+          <div class="kanban-col col-novo" id="kcol-novo" ondragover="kAllowDrop(event)" ondrop="kDrop(event,'novo')" ondragenter="kDragEnter(event)" ondragleave="kDragLeave(event)">
+            <div class="kcol-head"><span class="kcol-title" style="color:var(--blue)">Novo</span><span class="kcol-count" id="kcount-novo">0</span></div>
+            <div class="kcol-cards" id="kcards-novo"></div>
+          </div>
+          <div class="kanban-col col-contato" id="kcol-contato" ondragover="kAllowDrop(event)" ondrop="kDrop(event,'contato')" ondragenter="kDragEnter(event)" ondragleave="kDragLeave(event)">
+            <div class="kcol-head"><span class="kcol-title" style="color:var(--yellow)">Em Contato</span><span class="kcol-count" id="kcount-contato">0</span></div>
+            <div class="kcol-cards" id="kcards-contato"></div>
+          </div>
+          <div class="kanban-col col-agendado" id="kcol-agendado" ondragover="kAllowDrop(event)" ondrop="kDrop(event,'agendado')" ondragenter="kDragEnter(event)" ondragleave="kDragLeave(event)">
+            <div class="kcol-head"><span class="kcol-title" style="color:var(--purple)">Agendado</span><span class="kcol-count" id="kcount-agendado">0</span></div>
+            <div class="kcol-cards" id="kcards-agendado"></div>
+          </div>
+          <div class="kanban-col col-convertido" id="kcol-convertido" ondragover="kAllowDrop(event)" ondrop="kDrop(event,'convertido')" ondragenter="kDragEnter(event)" ondragleave="kDragLeave(event)">
+            <div class="kcol-head"><span class="kcol-title" style="color:var(--green)">Convertido</span><span class="kcol-count" id="kcount-convertido">0</span></div>
+            <div class="kcol-cards" id="kcards-convertido"></div>
+          </div>
+          <div class="kanban-col col-perdido" id="kcol-perdido" ondragover="kAllowDrop(event)" ondrop="kDrop(event,'perdido')" ondragenter="kDragEnter(event)" ondragleave="kDragLeave(event)">
+            <div class="kcol-head"><span class="kcol-title" style="color:var(--red)">Perdido</span><span class="kcol-count" id="kcount-perdido">0</span></div>
+            <div class="kcol-cards" id="kcards-perdido"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
       <div class="table-wrap">
         <div class="table-header">
           <div class="search-box">
@@ -785,6 +863,8 @@ function mapLead(row){
     telefone: row.telefone,
     origem: row.origem,
     campanha: row.campanha,
+    utmMedium: row.utm_medium,
+    utmContent: row.utm_content,
     tipo: row.tipo,
     volume: row.volume,
     endereco: row.endereco,
@@ -977,13 +1057,34 @@ async function openPanel(id){
       <div class="ps-label">Dados do Lead</div>
       <div class="info-row"><span class="ir-label">Telefone</span><span class="ir-val"><a href="https://wa.me/55${(lead.telefone||'').replace(/\D/g,'')}" target="_blank" style="color:var(--green)">${lead.telefone||'—'}</a></span></div>
       <div class="info-row"><span class="ir-label">Origem</span><span class="ir-val">${ORIGEM_LABEL[lead.origem]||lead.origem||'—'}</span></div>
-      ${lead.campanha?`<div class="info-row"><span class="ir-label">UTM Campaign</span><span class="ir-val" style="color:var(--orange);font-size:11px">${lead.campanha}</span></div>`:''}
       <div class="info-row"><span class="ir-label">Serviço</span><span class="ir-val">${lead.tipo||'—'}</span></div>
       <div class="info-row"><span class="ir-label">Volume</span><span class="ir-val">${lead.volume||'—'}</span></div>
       <div class="info-row"><span class="ir-label">Endereço</span><span class="ir-val">${lead.endereco||'—'}</span></div>
       <div class="info-row"><span class="ir-label">Entrada</span><span class="ir-val">${fmtDate(lead.data)}</span></div>
       <div class="info-row"><span class="ir-label">Agendamento</span><span class="ir-val">${fmtDate(lead.dataAgendamento)}</span></div>
       <div class="info-row"><span class="ir-label">Valor fechado</span><span class="ir-val" style="color:${lead.valor?'var(--green)':'var(--gray)'}">${lead.valor?fmtMoney(lead.valor):'—'}</span></div>
+    </div>
+    <div class="utm-section">
+      <div class="utm-section-title">Rastreamento UTM — Origem da Campanha</div>
+      <div class="utm-grid">
+        <div class="utm-item">
+          <div class="utm-item-label">Source (Plataforma)</div>
+          <div class="utm-item-value ${!lead.origem||lead.origem==='direto'?'empty':''}">${ORIGEM_LABEL[lead.origem]||lead.origem||'Não rastreado'}</div>
+        </div>
+        <div class="utm-item">
+          <div class="utm-item-label">Campaign (Campanha)</div>
+          <div class="utm-item-value ${!lead.campanha?'empty':''}">${lead.campanha||'Não rastreado'}</div>
+        </div>
+        <div class="utm-item">
+          <div class="utm-item-label">Medium (Mídia)</div>
+          <div class="utm-item-value ${!lead.utmMedium?'empty':''}">${lead.utmMedium||'Não rastreado'}</div>
+        </div>
+        <div class="utm-item">
+          <div class="utm-item-label">Content (Criativo)</div>
+          <div class="utm-item-value ${!lead.utmContent?'empty':''}">${lead.utmContent||'Não rastreado'}</div>
+        </div>
+      </div>
+      ${lead.campanha ? `<div style="margin-top:10px;font-size:10px;color:var(--gray)">Link de teste: <span style="color:var(--orange);font-family:monospace">?utm_source=${lead.origem}&utm_campaign=${lead.campanha}${lead.utmMedium?'&utm_medium='+lead.utmMedium:''}${lead.utmContent?'&utm_content='+lead.utmContent:''}</span></div>` : ''}
     </div>
     <div class="ps">
       <div class="ps-label">Atualizar Status</div>
@@ -1163,8 +1264,91 @@ function renderCharts(leads, campanhas){
 }
 
 // ── LEADS TABLE ───────────────────────────────────────────────
+// ── KANBAN ────────────────────────────────────────────────────
+let leadsView = 'table'
+let kDraggedId = null
+
+function setLeadsView(view){
+  leadsView = view
+  document.getElementById('btn-view-table').classList.toggle('active', view==='table')
+  document.getElementById('btn-view-kanban').classList.toggle('active', view==='kanban')
+  document.getElementById('leads-kanban').style.display  = view==='kanban' ? '' : 'none'
+  document.querySelector('.table-wrap').style.display    = view==='table'  ? '' : 'none'
+  if(view==='kanban') renderKanban()
+  else renderLeadsTable()
+}
+
+async function renderKanban(){
+  const filters = {}
+  const s = document.getElementById('search-leads')?.value?.trim()
+  const st = document.getElementById('filter-status')?.value
+  const or = document.getElementById('filter-origem')?.value
+  const me = document.getElementById('filter-mes')?.value
+  if(s)  filters.search = s
+  if(st) filters.status = st
+  if(or) filters.origem = or
+  if(me) filters.mes    = me
+
+  const leads = await DB.getLeads(filters)
+  document.getElementById('leads-count').textContent = `${leads.length} lead${leads.length!==1?'s':''}`
+
+  const stages = ['novo','contato','agendado','convertido','perdido']
+  stages.forEach(stage => {
+    const sl = leads.filter(l => l.status === stage)
+    document.getElementById('kcount-'+stage).textContent = sl.length
+    document.getElementById('kcards-'+stage).innerHTML = sl.length ? sl.map(l => `
+      <div class="kcard" draggable="true" id="kcard-${l.id}"
+           ondragstart="kDragStart(event,'${l.id}')" ondragend="kDragEnd(event)"
+           onclick="openPanel('${l.id}')">
+        <div class="kcard-name">${l.nome}</div>
+        <div class="kcard-svc">${l.tipo||'Sem tipo definido'}</div>
+        ${l.origem ? `<div style="margin-bottom:5px">${origemTag(l.origem)}</div>` : ''}
+        ${l.campanha||l.utmMedium||l.utmContent ? `
+        <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px">
+          ${l.campanha  ? `<span class="utm-pill" title="Campanha">${l.campanha}</span>` : ''}
+          ${l.utmMedium ? `<span class="utm-pill medium" title="Mídia">${l.utmMedium}</span>` : ''}
+          ${l.utmContent? `<span class="utm-pill content" title="Criativo">${l.utmContent}</span>` : ''}
+        </div>` : ''}
+        <div class="kcard-foot">
+          <span class="kcard-date">${fmtDate(l.data)}</span>
+          ${l.valor ? `<span class="kcard-val">${fmtMoney(l.valor)}</span>` : ''}
+        </div>
+      </div>`).join('')
+      : `<div style="padding:16px;text-align:center;font-size:11px;color:var(--gray)">Nenhum lead</div>`
+  })
+}
+
+function kDragStart(e, id){
+  kDraggedId = id
+  e.dataTransfer.effectAllowed = 'move'
+  setTimeout(() => document.getElementById('kcard-'+id)?.classList.add('dragging'), 0)
+}
+function kDragEnd(e){
+  document.querySelectorAll('.kcard').forEach(c => c.classList.remove('dragging'))
+  document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'))
+}
+function kAllowDrop(e){ e.preventDefault(); e.dataTransfer.dropEffect = 'move' }
+function kDragEnter(e){ e.currentTarget.closest('.kanban-col')?.classList.add('drag-over') }
+function kDragLeave(e){
+  const col = e.currentTarget.closest('.kanban-col')
+  if(col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over')
+}
+async function kDrop(e, newStatus){
+  e.preventDefault()
+  e.currentTarget.closest('.kanban-col')?.classList.remove('drag-over')
+  if(!kDraggedId) return
+  const id = kDraggedId; kDraggedId = null
+  try {
+    await DB.updateLeadStatus(id, newStatus)
+    toast(`Movido → ${STATUS_LABEL[newStatus]}`)
+    renderKanban()
+    updateBadge((await DB.getMetrics())?.por_status?.novo || 0)
+  } catch(err){ toast('Erro ao mover lead','error') }
+}
+
+// ── LEADS TABLE ───────────────────────────────────────────────
 let _debounceTimer = null
-function debounceRenderLeads(){ clearTimeout(_debounceTimer); _debounceTimer = setTimeout(renderLeadsTable, 350) }
+function debounceRenderLeads(){ clearTimeout(_debounceTimer); _debounceTimer = setTimeout(() => leadsView==='kanban' ? renderKanban() : renderLeadsTable(), 350) }
 
 async function renderLeadsTable(){
   document.getElementById('leads-table-area').innerHTML = '<div class="page-loading"><div class="spinner-lg"></div></div>'
@@ -1176,8 +1360,10 @@ async function renderLeadsTable(){
   }
   Object.keys(filters).forEach(k => { if(!filters[k]) delete filters[k] })
 
+
   const leads = await DB.getLeads(filters)
   populateMonthFilter(leads)
+  document.getElementById('leads-count').textContent = `${leads.length} lead${leads.length!==1?'s':''}`
 
   if(!leads.length){
     document.getElementById('leads-table-area').innerHTML = `<div class="empty-state"><div style="font-size:40px;opacity:.25">📋</div><strong>Nenhum lead encontrado</strong><p>Adicione o primeiro lead ou ajuste os filtros.</p></div>`
