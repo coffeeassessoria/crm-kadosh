@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kadosh CRM | Painel de Gestão</title>
+<link rel="icon" type="image/png" href="assets/logo.png">
+<link rel="shortcut icon" href="assets/logo.png">
+<link rel="apple-touch-icon" href="assets/logo.png">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -249,8 +252,8 @@ td.bold{font-weight:600;color:var(--white)}
 .view-btn.active{background:var(--dark3);color:var(--white)}
 .kanban-wrap{overflow-x:auto;padding-bottom:10px}
 .kanban-board{display:flex;gap:10px;align-items:flex-start;min-width:900px}
-.kanban-col{background:var(--dark);border:1px solid var(--border);border-radius:10px;width:220px;flex-shrink:0;transition:border-color .15s}
-.kanban-col.drag-over{border-color:var(--orange);background:rgba(245,130,32,.04)}
+.kanban-col{background:var(--dark);border:1px solid var(--border);border-radius:10px;width:220px;flex-shrink:0;transition:border-color .12s,background .12s,box-shadow .12s}
+.kanban-col.drag-over{border-color:var(--orange);background:rgba(245,130,32,.06);box-shadow:0 0 0 2px rgba(245,130,32,.18) inset}
 .kcol-head{padding:12px 14px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;border-top:3px solid transparent;border-radius:10px 10px 0 0}
 .col-novo    .kcol-head{border-top-color:var(--blue)}
 .col-contato .kcol-head{border-top-color:var(--yellow)}
@@ -260,14 +263,40 @@ td.bold{font-weight:600;color:var(--white)}
 .kcol-title{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase}
 .kcol-count{background:var(--dark3);border-radius:100px;font-size:10px;font-weight:700;padding:2px 8px;color:var(--gray-light)}
 .kcol-cards{padding:8px;display:flex;flex-direction:column;gap:7px;min-height:80px}
-.kcard{background:var(--dark2);border:1px solid var(--border);border-radius:8px;padding:11px;cursor:grab;transition:all .13s;user-select:none}
+.kcard{background:var(--dark2);border:1px solid var(--border);border-radius:8px;padding:11px;cursor:grab;transition:transform .1s,box-shadow .1s,opacity .1s,border-color .1s;user-select:none}
 .kcard:hover{border-color:rgba(245,130,32,.4);transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.35)}
-.kcard.dragging{opacity:.35;cursor:grabbing;transform:scale(.97)}
+.kcard.dragging{opacity:.2;cursor:grabbing;transform:scale(.95);pointer-events:none}
 .kcard-name{font-weight:600;font-size:13px;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kcard-svc{font-size:11px;color:var(--gray);margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kcard-foot{display:flex;align-items:center;justify-content:space-between;margin-top:7px}
 .kcard-date{font-size:10px;color:var(--gray)}
 .kcard-val{font-size:11px;font-weight:700;color:var(--green)}
+/* KANBAN FILTERS */
+.kanban-filter-bar{display:flex;align-items:center;gap:8px;padding:14px 0 12px;flex-wrap:wrap}
+.kf-search{display:flex;align-items:center;gap:7px;background:var(--dark2);border:1px solid var(--border);border-radius:6px;padding:7px 12px;min-width:220px;flex:1;max-width:300px}
+.kf-search input{background:none;border:none;outline:none;color:var(--white);font-size:13px;width:100%;font-family:'Barlow',sans-serif}
+.kf-search input::placeholder{color:var(--gray)}
+.kf-sep{width:1px;height:20px;background:var(--border);margin:0 2px}
+.kf-date{background:var(--dark2);border:1px solid var(--border);border-radius:6px;color:var(--gray-light);font-size:12px;padding:7px 10px;font-family:'Barlow',sans-serif;outline:none;cursor:pointer;color-scheme:dark}
+.kf-date:focus{border-color:var(--orange)}
+.kf-active-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(245,130,32,.15);border:1px solid rgba(245,130,32,.3);color:var(--orange);padding:4px 10px;border-radius:100px;font-size:11px;font-weight:700}
+.kf-count{font-size:12px;color:var(--gray);margin-left:auto;white-space:nowrap}
+/* KANBAN COLUMN ACTIONS */
+.kcol-head{position:relative}
+.kcol-actions{display:none;align-items:center;gap:3px;position:absolute;right:8px;top:50%;transform:translateY(-50%)}
+.kcol-head:hover .kcol-actions{display:flex}
+.kcol-act-btn{width:22px;height:22px;border-radius:4px;border:none;background:var(--dark3);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray);transition:all .13s}
+.kcol-act-btn:hover{background:var(--dark4);color:var(--white)}
+.kcol-act-btn.del:hover{background:rgba(239,68,68,.2);color:var(--red)}
+/* ADD COLUMN BUTTON */
+.kcol-add{width:200px;flex-shrink:0;background:transparent;border:2px dashed var(--border);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:28px 16px;cursor:pointer;transition:all .15s;color:var(--gray)}
+.kcol-add:hover{border-color:var(--orange);color:var(--orange);background:var(--orange-glow)}
+.kcol-add-icon{width:36px;height:36px;border-radius:50%;border:2px dashed currentColor;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1}
+.kcol-add-label{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+/* STAGE MODAL COLOR SWATCHES */
+.color-swatches{display:flex;gap:7px;flex-wrap:wrap;margin-top:6px}
+.color-swatch{width:28px;height:28px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:all .13s;flex-shrink:0}
+.color-swatch:hover,.color-swatch.selected{border-color:var(--white);transform:scale(1.15)}
 /* UTM TAGS */
 .utm-pill{display:inline-flex;align-items:center;gap:3px;font-size:9px;background:rgba(245,130,32,.1);border:1px solid rgba(245,130,32,.2);color:var(--orange);padding:2px 7px;border-radius:100px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 .utm-pill.medium{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.2);color:#60A5FA}
@@ -297,9 +326,7 @@ td.bold{font-weight:600;color:var(--white)}
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="logo-icon">
-      <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path fill="#000" d="M3 7h4v14H3zM10 3h4v18h-4zM17 10h4v11h-4z"/></svg>
-    </div>
+    <img src="assets/logo.png" alt="Kadosh Mini Caçambas" style="width:44px;height:44px;object-fit:contain;border-radius:6px;flex-shrink:0">
     <div class="logo-text">Kadosh CRM<span>Mini Caçambas</span></div>
   </div>
   <nav class="sidebar-nav">
@@ -413,28 +440,35 @@ td.bold{font-weight:600;color:var(--white)}
         <span id="leads-count" style="font-size:12px;color:var(--gray)"></span>
       </div>
 
-      <!-- Kanban Board -->
-      <div id="leads-kanban" style="display:none" class="kanban-wrap">
-        <div class="kanban-board">
-          <div class="kanban-col col-novo" id="kcol-novo" ondragover="kAllowDrop(event)" ondrop="kDrop(event,'novo')" ondragenter="kDragEnter(event)" ondragleave="kDragLeave(event)">
-            <div class="kcol-head"><span class="kcol-title" style="color:var(--blue)">Novo</span><span class="kcol-count" id="kcount-novo">0</span></div>
-            <div class="kcol-cards" id="kcards-novo"></div>
+      <!-- Kanban -->
+      <div id="leads-kanban" style="display:none">
+        <!-- Filtros do Kanban -->
+        <div class="kanban-filter-bar">
+          <div class="kf-search">
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="kf-search" placeholder="Buscar nome ou telefone..." oninput="debounceKanban()">
           </div>
-          <div class="kanban-col col-contato" id="kcol-contato" ondragover="kAllowDrop(event)" ondrop="kDrop(event,'contato')" ondragenter="kDragEnter(event)" ondragleave="kDragLeave(event)">
-            <div class="kcol-head"><span class="kcol-title" style="color:var(--yellow)">Em Contato</span><span class="kcol-count" id="kcount-contato">0</span></div>
-            <div class="kcol-cards" id="kcards-contato"></div>
-          </div>
-          <div class="kanban-col col-agendado" id="kcol-agendado" ondragover="kAllowDrop(event)" ondrop="kDrop(event,'agendado')" ondragenter="kDragEnter(event)" ondragleave="kDragLeave(event)">
-            <div class="kcol-head"><span class="kcol-title" style="color:var(--purple)">Agendado</span><span class="kcol-count" id="kcount-agendado">0</span></div>
-            <div class="kcol-cards" id="kcards-agendado"></div>
-          </div>
-          <div class="kanban-col col-convertido" id="kcol-convertido" ondragover="kAllowDrop(event)" ondrop="kDrop(event,'convertido')" ondragenter="kDragEnter(event)" ondragleave="kDragLeave(event)">
-            <div class="kcol-head"><span class="kcol-title" style="color:var(--green)">Convertido</span><span class="kcol-count" id="kcount-convertido">0</span></div>
-            <div class="kcol-cards" id="kcards-convertido"></div>
-          </div>
-          <div class="kanban-col col-perdido" id="kcol-perdido" ondragover="kAllowDrop(event)" ondrop="kDrop(event,'perdido')" ondragenter="kDragEnter(event)" ondragleave="kDragLeave(event)">
-            <div class="kcol-head"><span class="kcol-title" style="color:var(--red)">Perdido</span><span class="kcol-count" id="kcount-perdido">0</span></div>
-            <div class="kcol-cards" id="kcards-perdido"></div>
+          <select class="fsel" id="kf-origem" onchange="renderKanban()">
+            <option value="">Todas origens</option>
+            <option value="facebook_ads">Facebook Ads</option>
+            <option value="google_ads">Google Ads</option>
+            <option value="instagram">Instagram</option>
+            <option value="organico">Orgânico</option>
+            <option value="indicacao">Indicação</option>
+            <option value="direto">Direto</option>
+          </select>
+          <div class="kf-sep"></div>
+          <label style="font-size:11px;color:var(--gray);white-space:nowrap">Data de:</label>
+          <input type="date" class="kf-date" id="kf-data-inicio" onchange="renderKanban()">
+          <label style="font-size:11px;color:var(--gray)">até</label>
+          <input type="date" class="kf-date" id="kf-data-fim" onchange="renderKanban()">
+          <button class="btn btn-ghost btn-sm" onclick="clearKanbanFilters()">Limpar</button>
+          <span class="kf-count" id="kf-count"></span>
+        </div>
+        <!-- Board dinâmico -->
+        <div class="kanban-wrap">
+          <div class="kanban-board" id="kanban-board-inner">
+            <!-- Colunas renderizadas dinamicamente pelo JS -->
           </div>
         </div>
       </div>
@@ -581,6 +615,31 @@ td.bold{font-weight:600;color:var(--white)}
 
   </div>
 </div>
+</div>
+
+<!-- MODAL ETAPA KANBAN -->
+<div class="overlay" id="stage-modal-overlay" style="display:none" onclick="if(event.target===this)closeModalStage()">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-head">
+      <div class="modal-title" id="stage-modal-title">Nova Etapa</div>
+      <button class="modal-close" onclick="closeModalStage()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label class="form-label">Nome da etapa</label>
+        <input type="text" id="stage-name-input" class="form-control" placeholder="Ex: Proposta enviada" maxlength="40"
+               onkeydown="if(event.key==='Enter')saveStage()">
+      </div>
+      <div class="form-row" style="margin-top:14px">
+        <label class="form-label">Cor</label>
+        <div class="color-swatches" id="stage-color-swatches"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModalStage()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveStage()">Salvar</button>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL LEAD -->
@@ -918,10 +977,15 @@ const fmtMoney = v => new Intl.NumberFormat('pt-BR', { style:'currency', currenc
 const fmtDate  = s => { if(!s) return '—'; const [y,m,d] = s.split('-'); return `${d}/${m}/${y}` }
 const fmtDt    = s => { if(!s) return '—'; const d = new Date(s); return d.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) }
 
-const STATUS_LABEL = { novo:'Novo', contato:'Em contato', agendado:'Agendado', convertido:'Convertido', perdido:'Perdido' }
 const ORIGEM_LABEL = { facebook_ads:'Facebook Ads', google_ads:'Google Ads', instagram:'Instagram', organico:'Orgânico', indicacao:'Indicação', direto:'Direto' }
 
-function statusBadge(s){ return `<span class="badge badge-${s}">${STATUS_LABEL[s] || s}</span>` }
+// STATUS_LABEL agora é derivado das etapas dinâmicas
+function getStatusLabel(s){ return getStages().find(st => st.id === s)?.label || s }
+function statusBadge(s){
+  const stage = getStages().find(st => st.id === s)
+  const color = stage?.color || '#888'
+  return `<span class="badge" style="background:${color}22;color:${color};border-color:${color}44">${stage?.label || s}</span>`
+}
 function origemTag(o){
   return `<span class="origem-tag"><span class="sdot sdot-${o}"></span>${ORIGEM_LABEL[o] || o}</span>`
 }
@@ -1089,7 +1153,7 @@ async function openPanel(id){
     <div class="ps">
       <div class="ps-label">Atualizar Status</div>
       <select class="status-sel" onchange="updateStatus('${id}', this.value)">
-        ${['novo','contato','agendado','convertido','perdido'].map(s=>`<option value="${s}" ${lead.status===s?'selected':''}>${STATUS_LABEL[s]}</option>`).join('')}
+        ${getStages().map(st=>`<option value="${st.id}" ${lead.status===st.id?'selected':''}>${st.label}</option>`).join('')}
       </select>
     </div>
     <div class="ps">
@@ -1117,7 +1181,7 @@ async function openPanel(id){
 async function updateStatus(id, status){
   try {
     await DB.updateLeadStatus(id, status)
-    toast(`Status → ${STATUS_LABEL[status]}`)
+    toast(`Status → ${getStatusLabel(status)}`)
     await refreshAll()
     await openPanel(id)
   } catch(e) {
@@ -1204,7 +1268,7 @@ function renderFunnel(metrics){
     const pct = ((count / total) * 100).toFixed(0)
     return `<div class="funnel-stage stage-${s} ${funnelFilter===s?'active-filter':''}" onclick="setFunnelFilter('${s}')">
       <div class="f-count">${count}</div>
-      <div class="f-label">${STATUS_LABEL[s]}</div>
+      <div class="f-label">${getStatusLabel(s)}</div>
       <div class="f-pct">${pct}%</div>
     </div>`
   }).join('')
@@ -1263,11 +1327,138 @@ function renderCharts(leads, campanhas){
   })
 }
 
-// ── LEADS TABLE ───────────────────────────────────────────────
-// ── KANBAN ────────────────────────────────────────────────────
-let leadsView = 'table'
-let kDraggedId = null
+// ── KANBAN — STAGES (dinâmico) ────────────────────────────────
+let leadsView   = 'table'
+let kDraggedId  = null
+let _kStages    = null   // cache em memória
 
+const DEFAULT_STAGES = [
+  {id:'novo',       label:'Novo',        color:'#3B82F6', order:0},
+  {id:'contato',    label:'Em Contato',  color:'#F59E0B', order:1},
+  {id:'agendado',   label:'Agendado',    color:'#8B5CF6', order:2},
+  {id:'convertido', label:'Convertido',  color:'#22C55E', order:3},
+  {id:'perdido',    label:'Perdido',     color:'#EF4444', order:4},
+]
+
+async function loadStages(){
+  try {
+    const cfg = await DB.getConfig()
+    const raw = cfg['kanban_stages']
+    _kStages = raw ? JSON.parse(raw) : DEFAULT_STAGES
+  } catch(e){
+    _kStages = DEFAULT_STAGES
+  }
+  _kStages.sort((a,b) => a.order - b.order)
+  return _kStages
+}
+
+function getStages(){ return _kStages || DEFAULT_STAGES }
+
+async function saveStages(stages){
+  _kStages = stages
+  await DB.saveConfig({ kanban_stages: JSON.stringify(stages) })
+}
+
+// ── Stage Modal ───────────────────────────────────────────────
+const SWATCH_COLORS = [
+  '#3B82F6','#22C55E','#F59E0B','#EF4444','#8B5CF6',
+  '#EC4899','#14B8A6','#F97316','#6366F1','#78716C',
+]
+let _editingStageId = null
+let _stageColor     = '#3B82F6'
+
+function openModalStage(stageId = null){
+  _editingStageId = stageId
+  const stage     = stageId ? getStages().find(s => s.id === stageId) : null
+  _stageColor     = stage?.color || '#3B82F6'
+
+  document.getElementById('stage-modal-title').textContent = stage ? 'Editar Etapa' : 'Nova Etapa'
+  document.getElementById('stage-name-input').value        = stage?.label || ''
+  document.getElementById('stage-modal-overlay').style.display = 'flex'
+  renderSwatches()
+  document.getElementById('stage-name-input').focus()
+}
+
+function closeModalStage(){
+  document.getElementById('stage-modal-overlay').style.display = 'none'
+}
+
+function renderSwatches(){
+  const el = document.getElementById('stage-color-swatches')
+  el.innerHTML = SWATCH_COLORS.map(c =>
+    `<div class="color-swatch${c===_stageColor?' selected':''}" style="background:${c}" onclick="selectSwatch('${c}')"></div>`
+  ).join('')
+}
+
+function selectSwatch(color){
+  _stageColor = color
+  renderSwatches()
+}
+
+async function saveStage(){
+  const label = document.getElementById('stage-name-input').value.trim()
+  if(!label){ toast('Informe o nome da etapa','error'); return }
+
+  const stages = getStages()
+
+  if(_editingStageId){
+    const st = stages.find(s => s.id === _editingStageId)
+    if(st){ st.label = label; st.color = _stageColor }
+  } else {
+    const id = label.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') + '-' + Date.now()
+    stages.push({ id, label, color: _stageColor, order: stages.length })
+  }
+
+  await saveStages(stages)
+  closeModalStage()
+  await renderKanban()
+  toast(_editingStageId ? 'Etapa atualizada' : 'Etapa criada')
+}
+
+async function deleteStage(stageId){
+  const allLeads = await DB.getLeads()
+  const count    = allLeads.filter(l => l.status === stageId).length
+  const msg      = count
+    ? `Esta etapa tem ${count} lead(s). Eles ficarão sem etapa. Excluir mesmo assim?`
+    : 'Excluir esta etapa?'
+  if(!confirm(msg)) return
+
+  const stages = getStages().filter(s => s.id !== stageId)
+  stages.forEach((s, i) => s.order = i)
+  await saveStages(stages)
+  await renderKanban()
+  toast('Etapa removida')
+}
+
+// ── Kanban Filtros ────────────────────────────────────────────
+let _kDebounce = null
+function debounceKanban(){ clearTimeout(_kDebounce); _kDebounce = setTimeout(renderKanban, 350) }
+
+function clearKanbanFilters(){
+  document.getElementById('kf-search').value    = ''
+  document.getElementById('kf-origem').value    = ''
+  document.getElementById('kf-data-inicio').value = ''
+  document.getElementById('kf-data-fim').value  = ''
+  renderKanban()
+}
+
+function kFilterLeads(leads){
+  const search    = document.getElementById('kf-search')?.value?.trim().toLowerCase() || ''
+  const origem    = document.getElementById('kf-origem')?.value || ''
+  const dataInicio= document.getElementById('kf-data-inicio')?.value || ''
+  const dataFim   = document.getElementById('kf-data-fim')?.value || ''
+
+  return leads.filter(l => {
+    if(search && !l.nome.toLowerCase().includes(search) &&
+       !(l.telefone||'').includes(search)) return false
+    if(origem && l.origem !== origem) return false
+    if(dataInicio && l.data < dataInicio) return false
+    if(dataFim    && l.data > dataFim)    return false
+    return true
+  })
+}
+
+// ── Kanban View ───────────────────────────────────────────────
 function setLeadsView(view){
   leadsView = view
   document.getElementById('btn-view-table').classList.toggle('active', view==='table')
@@ -1278,72 +1469,168 @@ function setLeadsView(view){
   else renderLeadsTable()
 }
 
-async function renderKanban(){
-  const filters = {}
-  const s = document.getElementById('search-leads')?.value?.trim()
-  const st = document.getElementById('filter-status')?.value
-  const or = document.getElementById('filter-origem')?.value
-  const me = document.getElementById('filter-mes')?.value
-  if(s)  filters.search = s
-  if(st) filters.status = st
-  if(or) filters.origem = or
-  if(me) filters.mes    = me
+function kCardHtml(l){
+  return `
+    <div class="kcard" draggable="true" id="kcard-${l.id}"
+         ondragstart="kDragStart(event,'${l.id}')" ondragend="kDragEnd(event)"
+         onclick="openPanel('${l.id}')">
+      <div class="kcard-name">${l.nome}</div>
+      <div class="kcard-svc">${l.tipo||'Sem tipo definido'}</div>
+      ${l.origem ? `<div style="margin-bottom:5px">${origemTag(l.origem)}</div>` : ''}
+      ${l.campanha||l.utmMedium||l.utmContent ? `
+      <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px">
+        ${l.campanha  ? `<span class="utm-pill" title="Campanha">${l.campanha}</span>` : ''}
+        ${l.utmMedium ? `<span class="utm-pill medium" title="Mídia">${l.utmMedium}</span>` : ''}
+        ${l.utmContent? `<span class="utm-pill content" title="Criativo">${l.utmContent}</span>` : ''}
+      </div>` : ''}
+      <div class="kcard-foot">
+        <span class="kcard-date">${fmtDate(l.data)}</span>
+        ${l.valor ? `<span class="kcard-val">${fmtMoney(l.valor)}</span>` : ''}
+      </div>
+    </div>`
+}
 
-  const leads = await DB.getLeads(filters)
+async function renderKanban(){
+  if(!_kStages) await loadStages()
+  const stages = getStages()
+
+  const allLeads = await DB.getLeads()
+  const leads    = kFilterLeads(allLeads)
+
+  const activeFilters = [
+    document.getElementById('kf-search')?.value?.trim(),
+    document.getElementById('kf-origem')?.value,
+    document.getElementById('kf-data-inicio')?.value,
+    document.getElementById('kf-data-fim')?.value,
+  ].filter(Boolean).length
+
+  const countEl = document.getElementById('kf-count')
+  if(countEl) countEl.textContent = activeFilters
+    ? `${leads.length} lead${leads.length!==1?'s':''} (filtrado${leads.length!==1?'s':''})`
+    : `${leads.length} lead${leads.length!==1?'s':''}`
+
   document.getElementById('leads-count').textContent = `${leads.length} lead${leads.length!==1?'s':''}`
 
-  const stages = ['novo','contato','agendado','convertido','perdido']
-  stages.forEach(stage => {
-    const sl = leads.filter(l => l.status === stage)
-    document.getElementById('kcount-'+stage).textContent = sl.length
-    document.getElementById('kcards-'+stage).innerHTML = sl.length ? sl.map(l => `
-      <div class="kcard" draggable="true" id="kcard-${l.id}"
-           ondragstart="kDragStart(event,'${l.id}')" ondragend="kDragEnd(event)"
-           onclick="openPanel('${l.id}')">
-        <div class="kcard-name">${l.nome}</div>
-        <div class="kcard-svc">${l.tipo||'Sem tipo definido'}</div>
-        ${l.origem ? `<div style="margin-bottom:5px">${origemTag(l.origem)}</div>` : ''}
-        ${l.campanha||l.utmMedium||l.utmContent ? `
-        <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px">
-          ${l.campanha  ? `<span class="utm-pill" title="Campanha">${l.campanha}</span>` : ''}
-          ${l.utmMedium ? `<span class="utm-pill medium" title="Mídia">${l.utmMedium}</span>` : ''}
-          ${l.utmContent? `<span class="utm-pill content" title="Criativo">${l.utmContent}</span>` : ''}
-        </div>` : ''}
-        <div class="kcard-foot">
-          <span class="kcard-date">${fmtDate(l.data)}</span>
-          ${l.valor ? `<span class="kcard-val">${fmtMoney(l.valor)}</span>` : ''}
+  const board = document.getElementById('kanban-board-inner')
+  board.innerHTML = stages.map(stage => {
+    const sl = leads.filter(l => l.status === stage.id)
+    return `
+      <div class="kanban-col" id="kcol-${stage.id}"
+           ondragover="kAllowDrop(event)" ondrop="kDrop(event,'${stage.id}')"
+           ondragenter="kDragEnter(event)" ondragleave="kDragLeave(event)">
+        <div class="kcol-head">
+          <span class="kcol-title" style="color:${stage.color}">${stage.label}</span>
+          <span class="kcol-count">${sl.length}</span>
+          <div class="kcol-actions">
+            <button class="kcol-act-btn" title="Editar etapa" onclick="openModalStage('${stage.id}')">
+              <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+            <button class="kcol-act-btn del" title="Excluir etapa" onclick="deleteStage('${stage.id}')">
+              <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </div>
         </div>
-      </div>`).join('')
-      : `<div style="padding:16px;text-align:center;font-size:11px;color:var(--gray)">Nenhum lead</div>`
-  })
+        <div class="kcol-cards" id="kcards-${stage.id}">
+          ${sl.length
+            ? sl.map(kCardHtml).join('')
+            : `<div style="padding:16px;text-align:center;font-size:11px;color:var(--gray)">Nenhum lead</div>`}
+        </div>
+      </div>`
+  }).join('') + `
+    <div class="kcol-add" onclick="openModalStage()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nova etapa
+    </div>`
 }
+
+// ── Kanban Drag & Drop (otimista) ─────────────────────────────
+let _kDragOriginStatus = null  // status original para rollback
+let _kDragGhost = null         // clone visual que segue o cursor
 
 function kDragStart(e, id){
   kDraggedId = id
   e.dataTransfer.effectAllowed = 'move'
-  setTimeout(() => document.getElementById('kcard-'+id)?.classList.add('dragging'), 0)
+  e.dataTransfer.setData('text/plain', id)
+
+  const card = document.getElementById('kcard-'+id)
+  if(!card) return
+
+  // Descobre o status de origem para rollback
+  const col = card.closest('.kanban-col')
+  _kDragOriginStatus = col?.id?.replace('kcol-', '') || null
+
+  // Cria um ghost mais opaco para o dataTransfer (nativo do browser)
+  setTimeout(() => card.classList.add('dragging'), 0)
 }
+
 function kDragEnd(e){
   document.querySelectorAll('.kcard').forEach(c => c.classList.remove('dragging'))
   document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'))
 }
+
 function kAllowDrop(e){ e.preventDefault(); e.dataTransfer.dropEffect = 'move' }
-function kDragEnter(e){ e.currentTarget.closest('.kanban-col')?.classList.add('drag-over') }
-function kDragLeave(e){
+
+function kDragEnter(e){
+  e.preventDefault()
   const col = e.currentTarget.closest('.kanban-col')
-  if(col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over')
+  if(col) {
+    document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'))
+    col.classList.add('drag-over')
+    // Otimismo visual: move o card para o container desta coluna imediatamente
+    if(kDraggedId){
+      const card = document.getElementById('kcard-'+kDraggedId)
+      const target = col.querySelector('.kcol-cards')
+      if(card && target && !target.contains(card)){
+        card.classList.add('dragging')
+        target.insertBefore(card, target.firstChild)
+        // Atualiza os contadores das colunas visualmente
+        _kUpdateColCounts()
+      }
+    }
+  }
 }
+
+function kDragLeave(e){
+  // Não remove a classe aqui — kDragEnter na nova coluna já cuida disso
+}
+
+function _kUpdateColCounts(){
+  document.querySelectorAll('.kanban-col').forEach(col => {
+    const cards = col.querySelectorAll('.kcard').length
+    const badge = col.querySelector('.kcol-count')
+    if(badge) badge.textContent = cards
+  })
+}
+
 async function kDrop(e, newStatus){
   e.preventDefault()
-  e.currentTarget.closest('.kanban-col')?.classList.remove('drag-over')
+  document.querySelectorAll('.kanban-col').forEach(c => c.classList.remove('drag-over'))
+  document.querySelectorAll('.kcard').forEach(c => c.classList.remove('dragging'))
   if(!kDraggedId) return
-  const id = kDraggedId; kDraggedId = null
+
+  const id             = kDraggedId
+  const originStatus   = _kDragOriginStatus
+  kDraggedId           = null
+  _kDragOriginStatus   = null
+
+  if(originStatus === newStatus) return  // sem mudança
+
+  const stage = getStages().find(s => s.id === newStatus)
+
+  // O card já está na coluna visualmente (movido em kDragEnter)
+  // Persiste em background sem bloquear a UI
   try {
     await DB.updateLeadStatus(id, newStatus)
-    toast(`Movido → ${STATUS_LABEL[newStatus]}`)
-    renderKanban()
+    toast(`Movido → ${stage?.label || newStatus}`)
     updateBadge((await DB.getMetrics())?.por_status?.novo || 0)
-  } catch(err){ toast('Erro ao mover lead','error') }
+  } catch(err){
+    // Rollback: move o card de volta à coluna original
+    toast('Erro ao salvar — revertendo','error')
+    const card = document.getElementById('kcard-'+id)
+    const origContainer = document.querySelector(`#kcol-${originStatus} .kcol-cards`)
+    if(card && origContainer) origContainer.insertBefore(card, origContainer.firstChild)
+    _kUpdateColCounts()
+  }
 }
 
 // ── LEADS TABLE ───────────────────────────────────────────────
