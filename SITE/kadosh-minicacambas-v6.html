@@ -750,5 +750,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 </script>
+
+<!-- Kadosh CRM - Lead Capture | Cole antes do </body> -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(function(){
+  var sb=supabase.createClient('https://buwdfgjjecmkhbyzygvf.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1d2RmZ2pqZWNta2hieXp5Z3ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3Mzc2MzAsImV4cCI6MjA5NjMxMzYzMH0.rXStDdTpPu5AQBjQaCktGRCTkz9Y-iShCuATmKRz4EY');
+  function utm(p){return new URLSearchParams(location.search).get(p)||''}
+  var origemMap={'facebook':'facebook_ads','fb':'facebook_ads','google':'google_ads','instagram':'instagram'};
+  document.querySelector('.form-submit')?.addEventListener('click',async function(){
+    var origemRaw=utm('utm_source');
+    var lead={
+      nome:document.getElementById('f-nome')?.value||'',
+      origem:origemMap[origemRaw]||origemRaw||'direto',
+      campanha:utm('utm_campaign'),
+      utm_medium:utm('utm_medium'),
+      tipo:document.getElementById('f-tipo')?.value||'',
+      volume:document.getElementById('f-volume')?.value||'',
+      endereco:document.getElementById('f-end')?.value||'',
+      data_entrada:new Date().toISOString().slice(0,10),
+      status:'novo',valor:0
+    };
+    await sb.from('leads').insert(lead);
+    await sb.from('historico_lead').insert({lead_id:(await sb.from('leads').select('id').order('created_at',{ascending:false}).limit(1)).data[0]?.id,tipo:'criado',texto:'Lead do site'});
+  });
+})();
+</script>
 </body>
 </html>
