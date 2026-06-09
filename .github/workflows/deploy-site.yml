@@ -1,0 +1,25 @@
+name: Deploy Site → Hostinger
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'SITE/**'   # só dispara quando arquivos do site mudam
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via FTP para Hostinger
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server:   ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          local-dir:  ./SITE/
+          server-dir: ./public_html/
+          # Renomeia o arquivo principal para index.html no servidor
+          # (ajuste se o nome já for index.html na Hostinger)
