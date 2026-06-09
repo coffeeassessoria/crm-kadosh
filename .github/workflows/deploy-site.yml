@@ -3,8 +3,7 @@ name: Deploy Site → Hostinger
 on:
   push:
     branches: [master]
-    paths:
-      - 'SITE/**'   # só dispara quando arquivos do site mudam
+  workflow_dispatch:  # permite disparar manualmente pela aba Actions
 
 jobs:
   deploy:
