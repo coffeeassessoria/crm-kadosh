@@ -16,10 +16,9 @@ jobs:
       - name: Deploy via FTP para Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server:   ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASS }}
+          server:     ${{ secrets.FTP_HOST }}
+          username:   ${{ secrets.FTP_USER }}
+          password:   ${{ secrets.FTP_PASS }}
+          port:       21
           local-dir:  ./SITE/
           server-dir: ./public_html/
-          # Renomeia o arquivo principal para index.html no servidor
-          # (ajuste se o nome já for index.html na Hostinger)
