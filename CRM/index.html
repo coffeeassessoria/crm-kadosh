@@ -992,7 +992,7 @@ const DB = {
   },
 
   async getEventos(mes = null){
-    let q = sb.from('eventos').select('*, leads(id,nome,telefone,status)').order('data_evento').order('hora_inicio')
+    let q = sb.from('eventos').select('*').order('data_evento').order('hora_inicio', { nullsFirst: true })
     if(mes) q = q.gte('data_evento', mes+'-01').lte('data_evento', mes+'-31')
     const { data, error } = await q
     if(error) throw error
@@ -1999,8 +1999,13 @@ async function saveEvento(){
       toast('Evento criado')
     }
     closeModalEvento()
-    await renderCalendar()
-  } catch(err){ toast('Erro ao salvar evento','error') }
+  } catch(err){
+    console.error('[CRM] Erro ao salvar evento:', err)
+    toast('Erro ao salvar evento: ' + (err?.message || err), 'error')
+    return
+  }
+  // Render separado para não misturar erros de UI com erros de save
+  try { await renderCalendar() } catch(e){ console.warn('[CRM] Erro ao recarregar calendário:', e) }
 }
 
 async function deleteEvento(){
@@ -2010,8 +2015,12 @@ async function deleteEvento(){
     await DB.deleteEvento(_editingEventoId)
     toast('Evento excluído')
     closeModalEvento()
-    await renderCalendar()
-  } catch(err){ toast('Erro ao excluir','error') }
+  } catch(err){
+    console.error('[CRM] Erro ao excluir evento:', err)
+    toast('Erro ao excluir: ' + (err?.message || err), 'error')
+    return
+  }
+  try { await renderCalendar() } catch(e){ console.warn('[CRM] Erro ao recarregar calendário:', e) }
 }
 
 // ── CAMPANHAS ─────────────────────────────────────────────────
