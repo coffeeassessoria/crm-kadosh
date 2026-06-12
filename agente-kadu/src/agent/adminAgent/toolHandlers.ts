@@ -2,6 +2,7 @@ import { env } from '../../config/env';
 import { logger } from '../../lib/logger';
 import * as crm from '../../services/crm.service';
 import * as maps from '../../services/maps.service';
+import * as calendar from '../../services/calendar.service';
 import type { AgendaItem } from '../../types';
 
 /** Labels amigáveis das etapas do Kanban (ver SUPABASE_PATCH_03.sql, configuracoes.kanban_stages). */
@@ -87,6 +88,171 @@ export async function runAdminTool(name: string, input: Record<string, unknown>)
           label: KANBAN_LABELS[item.status] ?? item.status,
           total: item.total,
         })),
+      };
+    }
+
+    case 'confirmar_entrega': {
+      const query = String(input.nome_ou_telefone ?? '').trim();
+      const leads = await crm.findLeadsByNomeOuTelefone(query);
+
+      if (leads.length === 0) {
+        return { encontrado: false, mensagem: `Nenhum lead/cliente encontrado para "${query}".` };
+      }
+
+      if (leads.length > 1) {
+        return {
+          encontrado: false,
+          multiplos: true,
+          opcoes: leads.map((l) => ({ id: l.id, nome: l.nome, telefone: l.telefone, status: l.status })),
+          mensagem: `Encontrei ${leads.length} registros. Seja mais específico (use o nome completo ou o telefone).`,
+        };
+      }
+
+      const lead = leads[0];
+      await crm.confirmarEntregaLead(lead.id);
+
+      return {
+        confirmado: true,
+        lead_id: lead.id,
+        nome: lead.nome,
+        mensagem: `Entrega de *${lead.nome}* confirmada — status atualizado para "Convertido" no CRM.`,
+      };
+    }
+
+    case 'cadastrar_cliente': {
+      const nome = String(input.nome ?? '').trim();
+      const telefone = String(input.telefone ?? '').replace(/\D/g, '');
+
+      if (!nome || !telefone) {
+        return { erro: 'Nome e telefone são obrigatórios.' };
+      }
+
+      // Verifica se já existe lead com este telefone
+      const existente = await crm.findLeadByPhone(telefone);
+      if (existente) {
+        return {
+          cadastrado: false,
+          ja_existe: true,
+          lead_id: existente.id,
+          nome: existente.nome,
+          mensagem: `Já existe cadastro com este telefone: *${existente.nome}* (status: ${existente.status}).`,
+        };
+      }
+
+      const novoCliente = await crm.createLeadCliente({
+        nome,
+        telefone,
+        endereco: input.endereco ? String(input.endereco) : undefined,
+        bairro: input.bairro ? String(input.bairro) : undefined,
+        cpf: input.cpf ? String(input.cpf) : undefined,
+        email: input.email ? String(input.email) : undefined,
+        observacoes: input.observacoes ? String(input.observacoes) : undefined,
+      });
+
+      return {
+        cadastrado: true,
+        lead_id: novoCliente.id,
+        nome: novoCliente.nome,
+        mensagem: `Cliente *${novoCliente.nome}* cadastrado com sucesso no CRM.`,
+      };
+    }
+
+    case 'criar_agendamento': {
+      const nomeCliente = String(input.nome_cliente ?? '').trim();
+      const telefone = String(input.telefone ?? '').replace(/\D/g, '');
+      const enderecoCompleto = String(input.endereco_completo ?? '').trim();
+      const bairro = String(input.bairro ?? '').trim();
+      const tipoResiduo = String(input.tipo_residuo ?? '').trim();
+      const quantidade = Math.max(1, Number(input.quantidade_cacambas ?? 1));
+      const dataEntrega = String(input.data_entrega ?? '');
+      const horarioEntrega = input.horario_entrega ? String(input.horario_entrega) : null;
+      const diasPermanencia = Math.max(1, Number(input.dias_permanencia ?? 1));
+
+      const valorCalculado =
+        quantidade * (env.PRECO_LOCACAO + Math.max(0, diasPermanencia - 1) * env.DIARIA_ADICIONAL);
+      const valorTotal = input.valor_total ? Number(input.valor_total) : valorCalculado;
+
+      const dataRetirada = addDiasISO(dataEntrega, diasPermanencia);
+
+      // Encontra ou cria o lead pelo telefone
+      const lead = await crm.findOrCreateLeadByPhone(telefone, nomeCliente);
+
+      await crm.updateLead(lead.id, {
+        nome: nomeCliente,
+        tipo_residuo: tipoResiduo,
+        bairro,
+        endereco: enderecoCompleto,
+        quantidade_cacambas: quantidade,
+        valor: valorTotal,
+        status: 'agendado',
+        data_agendamento: dataEntrega,
+      });
+
+      const agendamento = await crm.createAgendamento({
+        lead_id: lead.id,
+        endereco_completo: enderecoCompleto,
+        bairro,
+        tipo_residuo: tipoResiduo,
+        quantidade_cacambas: quantidade,
+        data_entrega: dataEntrega,
+        horario_entrega: horarioEntrega,
+        data_retirada: dataRetirada,
+        dias_permanencia: diasPermanencia,
+        valor_total: valorTotal,
+        status: 'confirmado',
+      });
+
+      await crm.createEventoAgendamento({
+        leadId: lead.id,
+        titulo: `🚛 Entrega - ${nomeCliente} (${quantidade}x)`,
+        descricao: [
+          `Endereço: ${enderecoCompleto}`,
+          `Resíduo: ${tipoResiduo}`,
+          `Quantidade: ${quantidade} caçamba(s)`,
+          `Valor total: R$ ${valorTotal.toFixed(2)}`,
+          `Retirada prevista: ${dataRetirada}`,
+          `Telefone: ${telefone}`,
+        ].join('\n'),
+        dataEvento: dataEntrega,
+        horaInicio: horarioEntrega,
+      });
+
+      const googleEventId = await calendar.createDeliveryEvent({
+        title: `Entrega - ${nomeCliente}`,
+        description: [
+          `Cliente: ${nomeCliente}`,
+          `Telefone: ${telefone}`,
+          `Resíduo: ${tipoResiduo}`,
+          `Quantidade: ${quantidade} caçamba(s)`,
+          `Valor total: R$ ${valorTotal.toFixed(2)}`,
+          `Retirada prevista: ${dataRetirada}`,
+        ].join('\n'),
+        location: enderecoCompleto,
+        date: dataEntrega,
+        time: horarioEntrega,
+      });
+
+      if (googleEventId) {
+        await crm.updateAgendamento(agendamento.id, { google_event_id: googleEventId });
+      }
+
+      await crm.addHistorico(
+        lead.id,
+        'agendamento',
+        `Agendamento #${agendamento.numero_pedido ?? agendamento.id.slice(0, 8)} criado via comando no grupo para ${dataEntrega} (${quantidade}x, R$ ${valorTotal.toFixed(2)}).`,
+      );
+
+      return {
+        criado: true,
+        agendamento_id: agendamento.id,
+        numero_pedido: agendamento.numero_pedido,
+        nome_cliente: nomeCliente,
+        data_entrega: dataEntrega,
+        data_retirada: dataRetirada,
+        valor_total: valorTotal,
+        rota: maps.buildDirectionsLink(enderecoCompleto),
+        google_calendar: googleEventId ? 'criado' : 'nao_configurado',
+        mensagem: `Agendamento criado para *${nomeCliente}* em ${dataEntrega} — R$ ${valorTotal.toFixed(2)}. Retirada prevista: ${dataRetirada}.`,
       };
     }
 

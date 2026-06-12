@@ -33,9 +33,9 @@ const envSchema = z.object({
   GOOGLE_CALENDAR_ID: z.string().default('primary'),
 
   // Regras de negócio (RNF03.3)
-  PRECO_LOCACAO: z.coerce.number().positive().default(250),
+  PRECO_LOCACAO: z.coerce.number().positive().default(249),
   // Valor cobrado por dia extra de permanência da caçamba (além do 1º dia, já incluso na diária).
-  DIARIA_ADICIONAL: z.coerce.number().nonnegative().default(25),
+  DIARIA_ADICIONAL: z.coerce.number().nonnegative().default(15),
   CHAVE_PIX: z.string().default(''),
   HORARIO_BRIEFING_CRON: z.string().default('30 6 * * *'),
   TIMEZONE: z.string().default('America/Cuiaba'),

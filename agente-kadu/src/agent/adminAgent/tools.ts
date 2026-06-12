@@ -51,4 +51,74 @@ export const adminTools: Anthropic.Tool[] = [
       properties: {},
     },
   },
+  {
+    name: 'confirmar_entrega',
+    description:
+      'Marca a entrega como realizada: encontra o lead pelo nome ou telefone, define o status ' +
+      'do lead como "convertido" no CRM e registra no histórico. ' +
+      'Se a busca retornar mais de um lead, liste os resultados e peça que o usuário seja mais específico.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        nome_ou_telefone: {
+          type: 'string',
+          description: 'Nome (parcial) ou telefone (só dígitos) do cliente/lead',
+        },
+      },
+      required: ['nome_ou_telefone'],
+    },
+  },
+  {
+    name: 'cadastrar_cliente',
+    description:
+      'Cria um novo cadastro de cliente no CRM (lead com status "convertido" e cliente_desde = hoje). ' +
+      'Use quando o cliente entrou em contato por outro canal (ligação, presencial, etc.) ' +
+      'e não tem registro no WhatsApp/agente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        nome: { type: 'string', description: 'Nome completo do cliente' },
+        telefone: { type: 'string', description: 'Telefone com DDD (só dígitos, ex: 55669XXXXXXXX)' },
+        endereco: { type: 'string', description: 'Endereço completo (opcional)' },
+        bairro: { type: 'string', description: 'Bairro (opcional)' },
+        cpf: { type: 'string', description: 'CPF (opcional)' },
+        email: { type: 'string', description: 'E-mail (opcional)' },
+        observacoes: { type: 'string', description: 'Observações sobre o cliente (opcional)' },
+      },
+      required: ['nome', 'telefone'],
+    },
+  },
+  {
+    name: 'criar_agendamento',
+    description:
+      'Cria um novo agendamento de entrega de caçamba no CRM e no Google Agenda. ' +
+      'Encontra ou cria o lead pelo telefone. ' +
+      'O valor total é calculado automaticamente (R$ PRECO × qtde + DIARIA_ADICIONAL × dias extras) ' +
+      'a menos que seja fornecido explicitamente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        nome_cliente: { type: 'string', description: 'Nome do cliente' },
+        telefone: { type: 'string', description: 'Telefone com DDD (só dígitos)' },
+        endereco_completo: { type: 'string', description: 'Endereço de entrega completo' },
+        bairro: { type: 'string', description: 'Bairro da entrega' },
+        tipo_residuo: {
+          type: 'string',
+          description: 'Tipo de resíduo (ex: entulho, madeira, vegetação, misto)',
+        },
+        quantidade_cacambas: { type: 'number', description: 'Número de caçambas' },
+        data_entrega: { type: 'string', description: 'Data de entrega no formato YYYY-MM-DD' },
+        horario_entrega: { type: 'string', description: 'Horário de entrega HH:MM (opcional)' },
+        dias_permanencia: {
+          type: 'number',
+          description: 'Dias de permanência da caçamba no local (padrão 1 — já incluso na diária base)',
+        },
+        valor_total: {
+          type: 'number',
+          description: 'Valor total acordado em R$ (opcional — calculado automaticamente se omitido)',
+        },
+      },
+      required: ['nome_cliente', 'telefone', 'endereco_completo', 'bairro', 'tipo_residuo', 'quantidade_cacambas', 'data_entrega'],
+    },
+  },
 ];

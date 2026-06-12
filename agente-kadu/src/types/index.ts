@@ -57,6 +57,14 @@ export interface Lead {
   data_agendamento: string | null;
   /** Timestamp da última mensagem enviada manualmente por um humano (fromMe) — pausa o agente por 24h. */
   atendimento_humano_em: string | null;
+  /** Resumo gerado por IA da conversa do WhatsApp para orientar o próximo atendimento. */
+  resumo_conversa: string | null;
+  /** Dados cadastrais do cliente (preenchidos após conversão). */
+  cpf: string | null;
+  email: string | null;
+  observacoes_cliente: string | null;
+  /** Data do primeiro agendamento confirmado — marca a conversão em cliente. */
+  cliente_desde: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -79,6 +87,8 @@ export interface Agendamento {
   valor_total: number;
   status: AgendamentoStatus;
   google_event_id: string | null;
+  /** Número sequencial do pedido — atribuído automaticamente via trigger no banco. */
+  numero_pedido: number | null;
   created_at: string;
   updated_at: string;
 }

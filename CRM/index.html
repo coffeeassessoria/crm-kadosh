@@ -287,6 +287,20 @@ td.bold{font-weight:600;color:var(--white)}
 .kcard-foot{display:flex;align-items:center;justify-content:space-between;margin-top:7px}
 .kcard-date{font-size:10px;color:var(--gray)}
 .kcard-val{font-size:11px;font-weight:700;color:var(--green)}
+.kcard-resumo{font-size:10px;color:var(--gray);line-height:1.45;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;border-left:2px solid rgba(245,130,32,.35);padding-left:6px;font-style:italic}
+/* ── CLIENTES ── */
+.cli-table{width:100%;border-collapse:collapse}
+.cli-table th{font-size:10px;text-transform:uppercase;color:var(--gray);padding:9px 14px;text-align:left;border-bottom:1px solid var(--border);font-weight:600;letter-spacing:.05em;white-space:nowrap}
+.cli-table td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle}
+.cli-table tbody tr{cursor:pointer;transition:background .1s}
+.cli-table tbody tr:hover td{background:rgba(255,255,255,.03)}
+.ped-table{width:100%;border-collapse:collapse}
+.ped-table th{font-size:10px;text-transform:uppercase;color:var(--gray);padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap}
+.ped-table td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:11px;vertical-align:middle}
+.num-pedido{font-family:'Barlow Condensed',sans-serif;font-weight:700;color:var(--orange);font-size:14px}
+.cli-card-info{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;background:var(--dark2);border-radius:8px;border:1px solid var(--border);margin-bottom:20px}
+.cli-info-field .lbl{font-size:10px;color:var(--gray);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
+.cli-info-field .val{font-size:13px}
 /* KANBAN FILTERS */
 .kanban-filter-bar{display:flex;align-items:center;gap:8px;padding:14px 0 12px;flex-wrap:wrap}
 .kf-search{display:flex;align-items:center;gap:7px;background:var(--dark2);border:1px solid var(--border);border-radius:6px;padding:7px 12px;min-width:220px;flex:1;max-width:300px}
@@ -360,6 +374,11 @@ td.bold{font-weight:600;color:var(--white)}
       <div class="nav-item" data-tab="agendamentos" onclick="showTab('agendamentos')">
         <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         Agendamentos
+      </div>
+      <div class="nav-item" data-tab="clientes" onclick="showTab('clientes')">
+        <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+        Clientes
+        <span class="nav-badge" id="badge-clientes" style="display:none">0</span>
       </div>
     </div>
     <div class="nav-section">
@@ -551,6 +570,44 @@ td.bold{font-weight:600;color:var(--white)}
             <div id="agenda-semana"></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div id="tab-clientes" class="tab-pane">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:.02em">
+          Clientes <span id="clientes-count" style="color:var(--gray);font-size:14px;font-family:'Barlow',sans-serif;font-weight:400"></span>
+        </div>
+        <div style="flex:1"></div>
+        <div class="kf-search" style="min-width:0;flex:1;max-width:300px">
+          <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="clientes-search" type="text" placeholder="Buscar nome, telefone ou CPF..." oninput="filterClientes()">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openModalNovoCliente()">
+          <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo Cliente
+        </button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="cli-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nome</th>
+              <th>Telefone</th>
+              <th>CPF / CNPJ</th>
+              <th>Cliente desde</th>
+              <th style="text-align:center">Pedidos</th>
+              <th>Total gasto</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="clientes-tbody"></tbody>
+        </table>
+      </div>
+      <div id="clientes-empty" style="display:none;text-align:center;padding:48px;color:var(--gray);font-size:13px">
+        Nenhum cliente encontrado. Clientes aparecem automaticamente quando um agendamento é confirmado.
       </div>
     </div>
 
@@ -1013,6 +1070,33 @@ const DB = {
   async deleteEvento(id){
     const { error } = await sb.from('eventos').delete().eq('id', id)
     if(error) throw error
+  },
+
+  async getClientes(){
+    const { data, error } = await sb
+      .from('leads')
+      .select('*, agendamentos(id, numero_pedido, data_entrega, data_retirada, horario_entrega, endereco_completo, bairro, tipo_residuo, quantidade_cacambas, valor_total, status, dias_permanencia)')
+      .not('cliente_desde', 'is', null)
+      .order('cliente_desde', { ascending: false })
+    if(error) throw error
+    return data || []
+  },
+
+  async createCliente(payload){
+    const { data, error } = await sb.from('leads').insert(payload).select().single()
+    if(error) throw error
+    return data
+  },
+
+  async updateCliente(id, payload){
+    const { error } = await sb.from('leads').update(payload).eq('id', id)
+    if(error) throw error
+  },
+
+  async deleteCliente(id){
+    await sb.from('eventos').delete().eq('lead_id', id)
+    const { error } = await sb.from('leads').delete().eq('id', id)
+    if(error) throw error
   }
 }
 
@@ -1034,6 +1118,7 @@ function mapLead(row){
     valor: parseFloat(row.valor) || 0,
     data: row.data_entrada,
     dataAgendamento: row.data_agendamento,
+    resumoConversa: row.resumo_conversa || null,
     criadoEm: row.created_at,
     atualizadoEm: row.updated_at,
   }
@@ -1077,6 +1162,8 @@ function nextMonthStr(ym){
 // ── HELPERS (UI) ─────────────────────────────────────────────
 const fmtMoney = v => new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL' }).format(v || 0)
 const fmtDate  = s => { if(!s) return '—'; const [y,m,d] = s.split('-'); return `${d}/${m}/${y}` }
+const escHtml  = s => s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : ''
+const fmtPhone = p => { if(!p) return '—'; const n=p.replace(/\D/g,''); if(n.length===13) return `+${n.slice(0,2)} (${n.slice(2,4)}) ${n.slice(4,9)}-${n.slice(9)}`; if(n.length===11) return `(${n.slice(0,2)}) ${n.slice(2,7)}-${n.slice(7)}`; return p }
 const fmtDt    = s => { if(!s) return '—'; const d = new Date(s); return d.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }) }
 
 const ORIGEM_LABEL = { facebook_ads:'Facebook Ads', google_ads:'Google Ads', instagram:'Instagram', organico:'Orgânico', indicacao:'Indicação', direto:'Direto' }
@@ -1104,7 +1191,7 @@ function toast(msg, type = 'success'){
 }
 
 // ── NAVIGATION ────────────────────────────────────────────────
-const TAB_TITLES = { dashboard:'Dashboard', leads:'Gestão de Leads', agendamentos:'Agendamentos', campanhas:'Campanhas & ROAS', config:'Configurações' }
+const TAB_TITLES = { dashboard:'Dashboard', leads:'Gestão de Leads', agendamentos:'Agendamentos', clientes:'Clientes', campanhas:'Campanhas & ROAS', config:'Configurações' }
 let currentTab = 'dashboard'
 let funnelFilter = null
 
@@ -1119,6 +1206,7 @@ async function showTab(tab){
   if(tab === 'dashboard')    await renderDashboard()
   if(tab === 'leads')        await renderLeadsTable()
   if(tab === 'agendamentos') await renderCalendar()
+  if(tab === 'clientes')     await renderClientes()
   if(tab === 'campanhas')    await renderCampanhas()
   if(tab === 'config')       await renderConfig()
 }
@@ -1578,6 +1666,7 @@ function kCardHtml(l){
          onclick="openPanel('${l.id}')">
       <div class="kcard-name">${l.nome}</div>
       <div class="kcard-svc">${l.tipo||'Sem tipo definido'}</div>
+      ${l.resumoConversa ? `<div class="kcard-resumo" title="${l.resumoConversa.replace(/"/g,"'")}">${escHtml(l.resumoConversa)}</div>` : ''}
       ${l.origem ? `<div style="margin-bottom:5px">${origemTag(l.origem)}</div>` : ''}
       ${l.campanha||l.utmMedium||l.utmContent ? `
       <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px">
@@ -2254,6 +2343,178 @@ async function deleteAllLeads(){
   await refreshAll()
 }
 
+// ── CLIENTES ──────────────────────────────────────────────────
+let _clientes = []
+let _clienteAtivo = null
+let _excluirClienteId = null
+
+async function renderClientes(){
+  try {
+    _clientes = await DB.getClientes()
+  } catch(e) {
+    showToast('Erro ao carregar clientes: ' + e.message, 'error')
+    _clientes = []
+  }
+  const n = _clientes.length
+  const badge = document.getElementById('badge-clientes')
+  badge.textContent = n
+  badge.style.display = n ? '' : 'none'
+  document.getElementById('clientes-count').textContent = n ? `(${n})` : ''
+  renderClientesTabela(_clientes)
+}
+
+function filterClientes(){
+  const q = (document.getElementById('clientes-search')?.value || '').trim().toLowerCase()
+  const lista = q
+    ? _clientes.filter(c =>
+        (c.nome||'').toLowerCase().includes(q) ||
+        (c.telefone||'').includes(q) ||
+        (c.cpf||'').includes(q))
+    : _clientes
+  renderClientesTabela(lista)
+}
+
+function renderClientesTabela(lista){
+  const tbody  = document.getElementById('clientes-tbody')
+  const empty  = document.getElementById('clientes-empty')
+  if(!lista.length){ tbody.innerHTML=''; empty.style.display=''; return }
+  empty.style.display = 'none'
+  tbody.innerHTML = lista.map((c,i) => {
+    const ags = c.agendamentos || []
+    const total = ags.filter(a=>a.status==='confirmado').reduce((s,a)=>s+Number(a.valor_total),0)
+    return `<tr onclick="openClienteDetalhe('${c.id}')">
+      <td style="color:var(--gray)">${i+1}</td>
+      <td style="font-weight:600">${escHtml(c.nome)}</td>
+      <td>${fmtPhone(c.telefone)}</td>
+      <td>${c.cpf ? escHtml(c.cpf) : '<span style="color:var(--gray)">—</span>'}</td>
+      <td>${fmtDate(c.cliente_desde)}</td>
+      <td style="text-align:center"><span style="background:rgba(245,130,32,.15);color:var(--orange);border-radius:999px;padding:2px 10px;font-size:11px;font-weight:700">${ags.length}</span></td>
+      <td style="font-weight:700;color:var(--green)">${total>0?fmtMoney(total):'<span style="color:var(--gray)">—</span>'}</td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" style="padding:3px 8px" title="Editar" onclick="openModalEditarCliente('${c.id}')">✎</button>
+        <button class="btn btn-ghost btn-sm" style="padding:3px 8px;color:var(--red)" title="Excluir" onclick="promptExcluirCliente('${c.id}')">🗑</button>
+      </td>
+    </tr>`
+  }).join('')
+}
+
+function openClienteDetalhe(id){
+  const c = _clientes.find(x=>x.id===id)
+  if(!c) return
+  _clienteAtivo = c
+  document.getElementById('mc-nome').textContent = c.nome
+  document.getElementById('mc-desde').textContent = fmtDate(c.cliente_desde)
+  document.getElementById('mc-telefone').textContent = fmtPhone(c.telefone)
+  document.getElementById('mc-email').textContent = c.email || '—'
+  document.getElementById('mc-cpf').textContent = c.cpf || '—'
+  document.getElementById('mc-origem').innerHTML = c.origem ? origemTag(c.origem) : '—'
+  document.getElementById('mc-endereco').textContent = [c.endereco, c.bairro].filter(Boolean).join(' — ') || '—'
+  document.getElementById('mc-obs').textContent = c.observacoes_cliente || 'Nenhuma observação'
+
+  const ags = (c.agendamentos||[]).slice().sort((a,b)=>(b.numero_pedido||0)-(a.numero_pedido||0))
+  const totalPedidos = ags.length
+  const totalGasto   = ags.filter(a=>a.status==='confirmado').reduce((s,a)=>s+Number(a.valor_total),0)
+  document.getElementById('mc-total-pedidos').textContent = `${totalPedidos} pedido${totalPedidos!==1?'s':''} · ${fmtMoney(totalGasto)} total`
+
+  const empty  = document.getElementById('mc-pedidos-empty')
+  const tbody  = document.getElementById('mc-pedidos-tbody')
+  if(!ags.length){ tbody.innerHTML=''; empty.style.display=''; }
+  else {
+    empty.style.display='none'
+    const statusCor   = { confirmado:'var(--green)', proposta:'var(--yellow)', cancelado:'var(--red)', aguardando_sinal:'var(--orange)' }
+    const statusLabel = { confirmado:'Confirmado', proposta:'Proposta', cancelado:'Cancelado', aguardando_sinal:'Aguard. sinal' }
+    tbody.innerHTML = ags.map(a=>`<tr>
+      <td><span class="num-pedido">#${String(a.numero_pedido||0).padStart(4,'0')}</span></td>
+      <td>${fmtDate(a.data_entrega)}${a.horario_entrega?'<br><span style="color:var(--gray);font-size:10px">'+a.horario_entrega.slice(0,5)+'</span>':''}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(a.endereco_completo||'')}">${escHtml(a.endereco_completo||'—')}</td>
+      <td>${escHtml(a.tipo_residuo||'—')}</td>
+      <td style="text-align:center">${a.quantidade_cacambas}</td>
+      <td style="text-align:center">${a.dias_permanencia||1}d</td>
+      <td style="font-weight:700;color:var(--green)">${fmtMoney(a.valor_total)}</td>
+      <td><span style="color:${statusCor[a.status]||'var(--gray)'};font-size:10px;font-weight:600">${statusLabel[a.status]||a.status}</span></td>
+    </tr>`).join('')
+  }
+  openModal('modal-cliente')
+}
+
+function editarCliente(){ closeModal('modal-cliente'); openModalEditarCliente(_clienteAtivo?.id) }
+
+function openModalNovoCliente(){
+  _clienteAtivo = null
+  document.getElementById('mcf-title').textContent = 'Novo Cliente'
+  ;['mcf-nome','mcf-telefone','mcf-cpf','mcf-email','mcf-endereco','mcf-obs'].forEach(id=>document.getElementById(id).value='')
+  openModal('modal-cliente-form')
+}
+
+function openModalEditarCliente(id){
+  const c = _clientes.find(x=>x.id===id)
+  if(!c) return
+  _clienteAtivo = c
+  document.getElementById('mcf-title').textContent = 'Editar Cliente'
+  document.getElementById('mcf-nome').value      = c.nome||''
+  document.getElementById('mcf-telefone').value  = c.telefone||''
+  document.getElementById('mcf-cpf').value       = c.cpf||''
+  document.getElementById('mcf-email').value     = c.email||''
+  document.getElementById('mcf-endereco').value  = c.endereco||''
+  document.getElementById('mcf-obs').value       = c.observacoes_cliente||''
+  openModal('modal-cliente-form')
+}
+
+async function salvarCliente(){
+  const nome = document.getElementById('mcf-nome').value.trim()
+  if(!nome){ showToast('Nome é obrigatório','error'); return }
+  const payload = {
+    nome,
+    telefone: document.getElementById('mcf-telefone').value.trim()||null,
+    cpf:      document.getElementById('mcf-cpf').value.trim()||null,
+    email:    document.getElementById('mcf-email').value.trim()||null,
+    endereco: document.getElementById('mcf-endereco').value.trim()||null,
+    observacoes_cliente: document.getElementById('mcf-obs').value.trim()||null,
+  }
+  try {
+    if(_clienteAtivo){
+      await DB.updateCliente(_clienteAtivo.id, payload)
+      showToast('Cliente atualizado','success')
+    } else {
+      payload.status = 'convertido'
+      payload.origem = 'direto'
+      payload.cliente_desde = new Date().toISOString().slice(0,10)
+      await DB.createCliente(payload)
+      showToast('Cliente criado','success')
+    }
+    closeModal('modal-cliente-form')
+    await renderClientes()
+  } catch(e){ showToast('Erro: '+e.message,'error') }
+}
+
+function promptExcluirCliente(id){
+  _excluirClienteId = id
+  document.getElementById('del-cliente-confirm').value = ''
+  openModal('modal-delete-cliente')
+}
+
+async function confirmarExclusaoCliente(){
+  if(document.getElementById('del-cliente-confirm').value !== 'CONFIRMAR'){
+    showToast('Digite CONFIRMAR para prosseguir','error'); return
+  }
+  // Admin check: compara e-mail logado com lista em configuracoes.admin_emails
+  const { data:{ user } } = await sb.auth.getUser()
+  const { data: cfg } = await sb.from('configuracoes').select('valor').eq('chave','admin_emails').maybeSingle()
+  if(cfg && cfg.valor){
+    const admins = cfg.valor.split(',').map(e=>e.trim().toLowerCase())
+    if(!admins.includes((user?.email||'').toLowerCase())){
+      showToast('Apenas administradores podem excluir clientes','error'); return
+    }
+  }
+  try {
+    await DB.deleteCliente(_excluirClienteId)
+    closeModal('modal-delete-cliente')
+    closeModal('modal-cliente')
+    showToast('Cliente excluído','success')
+    await renderClientes()
+  } catch(e){ showToast('Erro: '+e.message,'error') }
+}
+
 // ── REAL-TIME ──────────────────────────────────────────────────
 function setupRealtime(){
   sb.channel('crm_changes')
@@ -2282,5 +2543,89 @@ async function init(){
 
 init()
 </script>
+
+<!-- MODAL — DETALHE DO CLIENTE -->
+<div id="modal-cliente" class="overlay">
+  <div class="modal" style="max-width:740px;width:95vw">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="mc-nome"></div>
+        <div style="font-size:11px;color:var(--gray);margin-top:3px">Cliente desde: <span id="mc-desde"></span></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-ghost btn-sm" onclick="editarCliente()">✎ Editar</button>
+        <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="promptExcluirCliente(_clienteAtivo?.id)">🗑 Excluir</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-cliente')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="cli-card-info">
+        <div class="cli-info-field"><div class="lbl">Telefone</div><div class="val" id="mc-telefone"></div></div>
+        <div class="cli-info-field"><div class="lbl">E-mail</div><div class="val" id="mc-email"></div></div>
+        <div class="cli-info-field"><div class="lbl">CPF / CNPJ</div><div class="val" id="mc-cpf"></div></div>
+        <div class="cli-info-field"><div class="lbl">Origem</div><div class="val" id="mc-origem"></div></div>
+        <div class="cli-info-field" style="grid-column:1/-1"><div class="lbl">Endereço</div><div class="val" id="mc-endereco"></div></div>
+        <div class="cli-info-field" style="grid-column:1/-1"><div class="lbl">Observações</div><div class="val" id="mc-obs" style="color:var(--gray);font-style:italic"></div></div>
+      </div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+        <span>Histórico de Pedidos</span>
+        <span id="mc-total-pedidos" style="font-size:11px;color:var(--gray);font-family:'Barlow',sans-serif;font-weight:400;text-transform:none"></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="ped-table">
+          <thead><tr>
+            <th>#Pedido</th><th>Entrega</th><th>Endereço</th><th>Resíduo</th><th style="text-align:center">Qtd</th><th style="text-align:center">Dias</th><th>Valor</th><th>Status</th>
+          </tr></thead>
+          <tbody id="mc-pedidos-tbody"></tbody>
+        </table>
+      </div>
+      <div id="mc-pedidos-empty" style="display:none;padding:24px;text-align:center;font-size:12px;color:var(--gray)">Nenhum pedido registrado</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL — NOVO / EDITAR CLIENTE -->
+<div id="modal-cliente-form" class="overlay">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-head">
+      <div class="modal-title" id="mcf-title">Novo Cliente</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-cliente-form')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="fg"><label>Nome *</label><input id="mcf-nome" type="text" placeholder="Nome completo"></div>
+        <div class="fg"><label>Telefone</label><input id="mcf-telefone" type="text" placeholder="(66) 99999-9999"></div>
+      </div>
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="fg"><label>CPF / CNPJ</label><input id="mcf-cpf" type="text" placeholder="000.000.000-00"></div>
+        <div class="fg"><label>E-mail</label><input id="mcf-email" type="email" placeholder="email@exemplo.com"></div>
+      </div>
+      <div class="fg" style="margin-bottom:12px"><label>Endereço</label><input id="mcf-endereco" type="text" placeholder="Rua, número, bairro, CEP"></div>
+      <div class="fg"><label>Observações</label><textarea id="mcf-obs" rows="3" placeholder="Notas sobre o cliente, preferências, histórico..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-cliente-form')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCliente()">Salvar Cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL — CONFIRMAR EXCLUSÃO (admin) -->
+<div id="modal-delete-cliente" class="overlay">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head">
+      <div class="modal-title" style="color:var(--red)">⚠ Excluir Cliente</div>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-delete-cliente')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;margin-bottom:16px;color:var(--gray)">Esta ação é <strong style="color:var(--white)">irreversível</strong>. O cliente e todo o seu histórico de conversas serão removidos permanentemente. Os agendamentos e eventos do calendário também serão excluídos.</p>
+      <div class="fg"><label>Digite <strong>CONFIRMAR</strong> para prosseguir</label><input id="del-cliente-confirm" type="text" placeholder="CONFIRMAR" autocomplete="off"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('modal-delete-cliente')">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--red);border-color:var(--red)" onclick="confirmarExclusaoCliente()">Excluir definitivamente</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>

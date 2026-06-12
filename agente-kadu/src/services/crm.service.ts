@@ -44,6 +44,12 @@ export async function findLeadByPhone(telefone: string): Promise<Lead | null> {
   return (data as Lead) ?? null;
 }
 
+/** Atualiza o campo resumo_conversa do lead com o resumo gerado por IA. */
+export async function updateResumoConversa(leadId: string, resumo: string): Promise<void> {
+  const { error } = await supabase.from('leads').update({ resumo_conversa: resumo }).eq('id', leadId);
+  if (error) logger.error({ error, leadId }, 'Falha ao salvar resumo da conversa');
+}
+
 /** Registra que um humano respondeu manualmente — pausa o agente Kadu por 24h para este lead. */
 export async function setAtendimentoHumano(leadId: string, timestamp: Date): Promise<void> {
   const { error } = await supabase
@@ -102,6 +108,30 @@ export async function getConversationHistory(leadId: string, limit = 20): Promis
 }
 
 /**
+ * Cria um evento visível no calendário do CRM a partir de um agendamento.
+ * A tabela `eventos` é a fonte de dados do calendário — sem este registro
+ * o agendamento não aparece no calendário do CRM.
+ */
+export async function createEventoAgendamento(input: {
+  leadId: string;
+  titulo: string;
+  descricao: string;
+  dataEvento: string;
+  horaInicio: string | null;
+}): Promise<void> {
+  const { error } = await supabase.from('eventos').insert({
+    lead_id: input.leadId,
+    titulo: input.titulo,
+    descricao: input.descricao,
+    data_evento: input.dataEvento,
+    hora_inicio: input.horaInicio ?? null,
+    cor: '#8B5CF6',
+  });
+
+  if (error) logger.error({ error, leadId: input.leadId }, 'Falha ao criar evento no calendário do CRM');
+}
+
+/**
  * RF03.4 — verifica se já existe agendamento para a data informada.
  * Limite simples e configurável: até 6 entregas por dia.
  */
@@ -120,8 +150,9 @@ export async function checkAvailability(data: string): Promise<{ disponivel: boo
   return { disponivel: total < MAX_ENTREGAS_POR_DIA, total_agendamentos: total };
 }
 
-type NovoAgendamento = Omit<Agendamento, 'id' | 'created_at' | 'updated_at' | 'google_event_id'> & {
+type NovoAgendamento = Omit<Agendamento, 'id' | 'created_at' | 'updated_at' | 'google_event_id' | 'numero_pedido'> & {
   status?: Agendamento['status'];
+  numero_pedido?: number | null;
 };
 
 export async function createAgendamento(input: NovoAgendamento): Promise<Agendamento> {
@@ -273,6 +304,70 @@ export async function getResumoFinanceiro(dataInicio: string, dataFim: string): 
       valor_total: pixConfirmados.reduce((soma, p) => soma + Number(p.valor), 0),
     },
   };
+}
+
+/** Busca leads pelo nome (busca parcial case-insensitive) ou pelo telefone (exato, só dígitos). */
+export async function findLeadsByNomeOuTelefone(query: string): Promise<Lead[]> {
+  const normalizedPhone = query.replace(/\D/g, '');
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*')
+    .or(`nome.ilike.%${query}%${normalizedPhone ? `,telefone.eq.${normalizedPhone}` : ''}`)
+    .order('updated_at', { ascending: false })
+    .limit(5);
+  if (error) throw error;
+  return (data ?? []) as Lead[];
+}
+
+/** Marca o lead como convertido, confirma o agendamento mais recente (se não cancelado) e registra no histórico. */
+export async function confirmarEntregaLead(leadId: string): Promise<void> {
+  await updateLead(leadId, { status: 'convertido' });
+
+  const { data: agendamentos } = await supabase
+    .from('agendamentos')
+    .select('id, status')
+    .eq('lead_id', leadId)
+    .neq('status', 'cancelado')
+    .order('created_at', { ascending: false })
+    .limit(1);
+
+  if (agendamentos && agendamentos.length > 0 && agendamentos[0].status !== 'confirmado') {
+    await updateAgendamento(agendamentos[0].id, { status: 'confirmado' });
+  }
+
+  await addHistorico(leadId, 'convertido', 'Entrega confirmada via comando no grupo operacional.');
+}
+
+/** Cria um lead já classificado como cliente (status convertido, cliente_desde = hoje). */
+export async function createLeadCliente(data: {
+  nome: string;
+  telefone: string;
+  endereco?: string;
+  bairro?: string;
+  cpf?: string;
+  email?: string;
+  observacoes?: string;
+}): Promise<Lead> {
+  const hoje = new Date().toISOString().slice(0, 10);
+  const { data: created, error } = await supabase
+    .from('leads')
+    .insert({
+      nome: data.nome,
+      telefone: data.telefone,
+      origem: 'cadastro_manual_grupo',
+      status: 'convertido',
+      endereco: data.endereco ?? null,
+      bairro: data.bairro ?? null,
+      cpf: data.cpf ?? null,
+      email: data.email ?? null,
+      observacoes_cliente: data.observacoes ?? null,
+      cliente_desde: hoje,
+    })
+    .select('*')
+    .single();
+  if (error) throw error;
+  await addHistorico(created.id, 'criado', 'Cliente cadastrado manualmente via comando no grupo operacional.');
+  return created as Lead;
 }
 
 export interface FunilLeadsItem {

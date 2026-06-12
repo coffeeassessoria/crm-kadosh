@@ -70,6 +70,22 @@ export async function runTool(name: string, input: Record<string, unknown>, lead
         status: 'confirmado',
       });
 
+      // Cria evento no calendário do CRM (tabela `eventos`) para aparecer na view de Agendamentos
+      await crm.createEventoAgendamento({
+        leadId: lead.id,
+        titulo: `🚛 Entrega - ${nomeCliente} (${quantidade}x)`,
+        descricao: [
+          `Endereço: ${enderecoCompleto}`,
+          `Resíduo: ${tipoResiduo}`,
+          `Quantidade: ${quantidade} caçamba(s)`,
+          `Valor total: R$ ${valorTotal.toFixed(2)}`,
+          `Retirada prevista: ${dataRetirada}`,
+          `Telefone: ${telefone}`,
+        ].join('\n'),
+        dataEvento: dataEntrega,
+        horaInicio: horarioEntrega,
+      });
+
       const googleEventId = await calendar.createDeliveryEvent({
         title: `Entrega - ${nomeCliente}`,
         description: [

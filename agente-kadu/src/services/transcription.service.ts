@@ -12,10 +12,14 @@ export async function transcribeAudio(buffer: Buffer, mimeType: string): Promise
     return null;
   }
 
-  const extension = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp3') ? 'mp3' : 'm4a';
+  // WhatsApp envia "audio/ogg; codecs=opus" — normaliza para o MIME base antes de enviar ao Whisper.
+  const baseMime = mimeType.split(';')[0].trim();
+  const extension = baseMime.includes('ogg') ? 'ogg' : baseMime.includes('mp3') ? 'mp3' : 'm4a';
+
+  logger.info({ mimeType, baseMime, extension, bufferBytes: buffer.length }, 'Transcrevendo áudio via Whisper');
 
   const form = new FormData();
-  form.append('file', new Blob([buffer], { type: mimeType }), `audio.${extension}`);
+  form.append('file', new Blob([buffer], { type: baseMime }), `audio.${extension}`);
   form.append('model', 'whisper-1');
   form.append('language', 'pt');
 
@@ -26,10 +30,12 @@ export async function transcribeAudio(buffer: Buffer, mimeType: string): Promise
   });
 
   if (!res.ok) {
-    logger.error({ status: res.status }, 'Falha ao transcrever áudio via Whisper');
+    const errorBody = await res.text();
+    logger.error({ status: res.status, errorBody }, 'Falha ao transcrever áudio via Whisper');
     return null;
   }
 
   const data = (await res.json()) as { text: string };
+  logger.info({ transcriptLength: data.text.length }, 'Áudio transcrito com sucesso');
   return data.text;
 }

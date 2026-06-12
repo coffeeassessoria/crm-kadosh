@@ -4,6 +4,7 @@ import { logger } from '../lib/logger';
 import * as crm from '../services/crm.service';
 import * as whatsapp from '../services/whatsapp.service';
 import { transcribeAudio } from '../services/transcription.service';
+import { generateAndSaveConversationSummary } from '../services/summary.service';
 import { agentTools } from './tools';
 import { runTool } from './toolHandlers';
 import { buildSystemPrompt } from './systemPrompt';
@@ -85,15 +86,24 @@ export async function handleHumanTakeover(msg: IncomingMessage): Promise<void> {
 export async function handleIncomingMessage(msg: IncomingMessage): Promise<void> {
   const lead = await crm.findOrCreateLeadByPhone(msg.from, msg.name);
 
-  await crm.logMensagem(lead.id, 'inbound', msg.type, msg.text ?? `[${msg.type}]`, msg.messageId);
   await whatsapp.markMessageAsRead(msg.messageKey).catch((err) => logger.warn({ err }, 'Falha ao marcar mensagem como lida'));
 
   if (isHumanTakeoverActive(lead)) {
     logger.info({ leadId: lead.id }, 'Atendimento humano ativo — agente Kadu não responde');
+    // Ainda registra a mensagem recebida mesmo sem responder
+    await crm.logMensagem(lead.id, 'inbound', msg.type, msg.text ?? `[${msg.type}]`, msg.messageId);
     return;
   }
 
+  // Processa o conteúdo antes de logar para capturar a transcrição real do áudio
   const userContent = await buildUserContent(msg);
+
+  // Para áudio, salva o texto transcrito em vez de "[audio]"
+  const logConteudo =
+    typeof userContent === 'string' && userContent.startsWith('[Áudio transcrito]:')
+      ? userContent
+      : msg.text ?? `[${msg.type}]`;
+  await crm.logMensagem(lead.id, 'inbound', msg.type, logConteudo, msg.messageId);
   const history = await crm.getConversationHistory(lead.id, 20);
 
   const messages: Anthropic.MessageParam[] = [...history, { role: 'user', content: userContent }];
@@ -136,4 +146,9 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
   } else {
     logger.warn({ leadId: currentLead.id }, 'Agente não gerou resposta em texto após o limite de iterações de tools');
   }
+
+  // Gera e salva resumo da conversa de forma assíncrona (não bloqueia a resposta ao cliente)
+  generateAndSaveConversationSummary(currentLead.id).catch((err) =>
+    logger.error({ err, leadId: currentLead.id }, 'Erro ao gerar resumo da conversa'),
+  );
 }
