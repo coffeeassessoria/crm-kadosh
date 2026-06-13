@@ -5,6 +5,10 @@ import * as calendar from '../services/calendar.service';
 import * as maps from '../services/maps.service';
 import type { Lead } from '../types';
 
+function calcularValorLocacao(quantidade: number, diasPermanencia: number): number {
+  return quantidade * env.PRECO_LOCACAO + quantidade * Math.max(0, diasPermanencia - 1) * env.DIARIA_ADICIONAL;
+}
+
 function addDias(dataISO: string, dias: number): string {
   const data = new Date(`${dataISO}T00:00:00`);
   data.setDate(data.getDate() + dias);
@@ -37,8 +41,8 @@ export async function runTool(name: string, input: Record<string, unknown>, lead
       const diasPermanencia = Math.max(1, Number(input.dias_permanencia ?? 1));
       const dataRetirada = addDias(dataEntrega, diasPermanencia);
       const horarioEntrega = (input.horario_entrega as string | undefined) ?? null;
-      const valorTotal = Number(input.valor_total);
       const quantidade = Number(input.quantidade_cacambas);
+      const valorTotal = calcularValorLocacao(quantidade, diasPermanencia);
       const nomeCliente = String(input.nome_cliente);
       const enderecoCompleto = String(input.endereco_completo);
       const bairro = String(input.bairro);
