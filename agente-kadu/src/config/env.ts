@@ -47,6 +47,9 @@ const envSchema = z.object({
   // Palavra-gatilho (case-insensitive, busca por palavra) que aciona o agente administrativo no grupo.
   AGENTE_ADMIN_TRIGGER: z.string().min(1).default('kadu'),
 
+  // Prova social — URLs das fotos das caçambas (separadas por vírgula)
+  SOCIAL_PROOF_URLS: z.string().optional(),
+
   // Segurança (RNF01.4)
   RATE_LIMIT_MAX_PER_MINUTE: z.coerce.number().positive().default(10),
 });

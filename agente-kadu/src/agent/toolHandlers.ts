@@ -3,6 +3,7 @@ import { logger } from '../lib/logger';
 import * as crm from '../services/crm.service';
 import * as calendar from '../services/calendar.service';
 import * as maps from '../services/maps.service';
+import * as whatsapp from '../services/whatsapp.service';
 import type { Lead } from '../types';
 
 function calcularValorLocacao(quantidade: number, diasPermanencia: number): number {
@@ -163,6 +164,35 @@ export async function runTool(name: string, input: Record<string, unknown>, lead
       logger.warn({ leadId: lead.id, motivo }, 'Conversa escalada para atendente humano');
 
       return { escalado: true };
+    }
+
+    case 'send_social_proof': {
+      const urls = (env.SOCIAL_PROOF_URLS ?? '').split(',').map((u) => u.trim()).filter(Boolean);
+
+      if (urls.length === 0) {
+        logger.warn({ leadId: lead.id }, 'SOCIAL_PROOF_URLS não configurado — fotos não enviadas');
+        return { enviado: false, motivo: 'sem_imagens_configuradas' };
+      }
+
+      const telefone = lead.telefone;
+      if (!telefone) return { enviado: false, motivo: 'telefone_nao_disponivel' };
+
+      // Primeira foto com legenda de apresentação
+      await whatsapp.sendImageMessage(
+        telefone,
+        urls[0],
+        '🧡 Olha nossa mini caçamba aqui! Entrega rápida em Sinop-MT 🚛',
+      );
+
+      // Demais fotos sem legenda, com intervalo para não cair em spam
+      for (const url of urls.slice(1)) {
+        await new Promise((r) => setTimeout(r, 1200));
+        await whatsapp.sendImageMessage(telefone, url);
+      }
+
+      await crm.addHistorico(lead.id, 'prova_social', `${urls.length} foto(s) das caçambas enviada(s) ao cliente.`);
+
+      return { enviado: true, quantidade: urls.length };
     }
 
     case 'mark_lead_lost': {

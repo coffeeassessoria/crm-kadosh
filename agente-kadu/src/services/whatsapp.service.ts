@@ -32,6 +32,18 @@ export async function sendTextMessage(to: string, text: string) {
   });
 }
 
+/** Envia uma imagem a partir de URL pública para um contato. Legenda é opcional. */
+export async function sendImageMessage(to: string, imageUrl: string, caption?: string) {
+  return callEvolutionApi(`/message/sendMedia/${INSTANCE}`, {
+    number: to,
+    mediatype: 'image',
+    mimetype: 'image/jpeg',
+    caption: caption ?? '',
+    media: imageUrl,
+    fileName: 'cacamba-kadosh.jpg',
+  });
+}
+
 /** Marca a mensagem recebida como lida no WhatsApp. */
 export async function markMessageAsRead(messageKey: MessageKey) {
   return callEvolutionApi(`/chat/markMessageAsRead/${INSTANCE}`, {

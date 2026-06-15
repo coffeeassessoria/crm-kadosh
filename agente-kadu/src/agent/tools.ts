@@ -125,6 +125,19 @@ export const agentTools: Anthropic.Tool[] = [
     },
   },
   {
+    name: 'send_social_proof',
+    description:
+      'Envia fotos reais das mini caçambas da Kadosh para o cliente, como prova social. ' +
+      'Use quando o cliente: pedir para ver fotos ("tem foto?", "como é a caçamba?"), ' +
+      'demonstrar dúvida sobre o tamanho ou aparência do produto, ' +
+      'perguntar se é uma empresa confiável, ou hesitar antes de fechar o agendamento. ' +
+      'Não use mais de uma vez por conversa.',
+    input_schema: {
+      type: 'object',
+      properties: {},
+    },
+  },
+  {
     name: 'mark_lead_lost',
     description:
       'Marca o lead como "perdido" no CRM quando a negociação não avança (cliente desiste, está fora ' +
