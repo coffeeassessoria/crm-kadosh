@@ -177,22 +177,25 @@ export async function runTool(name: string, input: Record<string, unknown>, lead
       const telefone = lead.telefone;
       if (!telefone) return { enviado: false, motivo: 'telefone_nao_disponivel' };
 
+      // Envia no máximo 3 fotos por conversa
+      const fotosParaEnviar = urls.slice(0, 3);
+
       // Primeira foto com legenda de apresentação
       await whatsapp.sendImageMessage(
         telefone,
-        urls[0],
+        fotosParaEnviar[0],
         '🧡 Olha nossa mini caçamba aqui! Entrega rápida em Sinop-MT 🚛',
       );
 
       // Demais fotos sem legenda, com intervalo para não cair em spam
-      for (const url of urls.slice(1)) {
+      for (const url of fotosParaEnviar.slice(1)) {
         await new Promise((r) => setTimeout(r, 1200));
         await whatsapp.sendImageMessage(telefone, url);
       }
 
-      await crm.addHistorico(lead.id, 'prova_social', `${urls.length} foto(s) das caçambas enviada(s) ao cliente.`);
+      await crm.addHistorico(lead.id, 'prova_social', `${fotosParaEnviar.length} foto(s) das caçambas enviada(s) ao cliente.`);
 
-      return { enviado: true, quantidade: urls.length };
+      return { enviado: true, quantidade: fotosParaEnviar.length };
     }
 
     case 'mark_lead_lost': {

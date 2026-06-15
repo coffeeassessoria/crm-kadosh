@@ -286,6 +286,25 @@ footer{background:var(--dark);padding:60px 5% 36px;border-top:1px solid var(--bo
   .diff-list{gap:16px}
   .dep-grid{gap:2px}
 }
+
+/* ── GALERIA ── */
+#galeria{background:var(--dark)}
+.galeria-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:auto auto;gap:10px;margin-top:48px}
+.galeria-item{overflow:hidden;border-radius:8px;aspect-ratio:4/3;position:relative;cursor:pointer}
+.galeria-item img{width:100%;height:100%;object-fit:cover;transition:transform .35s ease,filter .35s ease;filter:brightness(.85)}
+.galeria-item:hover img{transform:scale(1.05);filter:brightness(1)}
+.galeria-item:first-child{grid-column:span 2;aspect-ratio:16/9}
+.galeria-badge{position:absolute;top:10px;left:10px;background:var(--orange);color:#fff;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:4px}
+.galeria-cta{text-align:center;margin-top:40px}
+@media(max-width:768px){.galeria-grid{grid-template-columns:1fr 1fr}.galeria-item:first-child{grid-column:span 2}}
+@media(max-width:480px){.galeria-grid{grid-template-columns:1fr}.galeria-item:first-child{grid-column:span 1;aspect-ratio:4/3}}
+
+/* ── LIGHTBOX ── */
+.lb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;align-items:center;justify-content:center}
+.lb-overlay.open{display:flex}
+.lb-img{max-width:90vw;max-height:85vh;border-radius:8px;object-fit:contain}
+.lb-close{position:absolute;top:20px;right:24px;font-size:32px;color:#fff;cursor:pointer;line-height:1;opacity:.7}
+.lb-close:hover{opacity:1}
 </style>
 </head>
 <body>
@@ -459,6 +478,45 @@ footer{background:var(--dark);padding:60px 5% 36px;border-top:1px solid var(--bo
     </div>
   </div>
 </section>
+
+<!-- GALERIA -->
+<section id="galeria">
+  <div class="section-inner">
+    <p class="section-tag">Nossas Caçambas</p>
+    <h2 class="section-title">Veja de Perto<br>Antes de <span style="color:var(--orange)">Agendar</span></h2>
+    <p class="section-sub">Caçambas laranjinhas, identificadas, entregas feitas todos os dias em Sinop-MT.</p>
+    <div class="galeria-grid">
+      <div class="galeria-item" onclick="abrirLb(this)">
+        <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto3.jpg.jpeg" alt="Mini caçamba Kadosh com logo" loading="lazy">
+        <span class="galeria-badge">Kadosh Mini Caçambas</span>
+      </div>
+      <div class="galeria-item" onclick="abrirLb(this)">
+        <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto4.jpg.jpeg" alt="Caçamba entregue em residência" loading="lazy">
+      </div>
+      <div class="galeria-item" onclick="abrirLb(this)">
+        <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto5.jpg.jpeg" alt="Caçamba em calçada residencial" loading="lazy">
+      </div>
+      <div class="galeria-item" onclick="abrirLb(this)">
+        <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto1.jpg.jpeg" alt="Mini caçamba Kadosh número 04" loading="lazy">
+      </div>
+      <div class="galeria-item" onclick="abrirLb(this)">
+        <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto2.jpg.jpeg" alt="Caçamba em uso na obra" loading="lazy">
+      </div>
+    </div>
+    <div class="galeria-cta">
+      <a class="btn-primary" href="https://wa.me/5566996585048?text=Olá!%20Vi%20as%20fotos%20das%20caçambas%20e%20quero%20agendar." target="_blank">
+        <svg width="22" height="22"><use href="#ic-wpp"/></svg>
+        Quero Agendar Agora
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Lightbox -->
+<div class="lb-overlay" id="lb" onclick="fecharLb()">
+  <span class="lb-close">×</span>
+  <img class="lb-img" id="lb-img" src="" alt="">
+</div>
 
 <!-- DEPOIMENTOS -->
 <section id="depoimentos">
@@ -791,6 +849,19 @@ document.addEventListener('DOMContentLoaded', function() {
   var btn = document.querySelector('.form-submit');
   if(btn) btn.addEventListener('click', function(){ capturarLead().catch(function(e){ console.warn('[CRM] Falha captura:', e); }); });
 })();
+</script>
+<script>
+function abrirLb(el){
+  var src = el.querySelector('img').src;
+  document.getElementById('lb-img').src = src;
+  document.getElementById('lb').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function fecharLb(){
+  document.getElementById('lb').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e){ if(e.key === 'Escape') fecharLb(); });
 </script>
 </body>
 </html>
