@@ -7,7 +7,7 @@ const envSchema = z.object({
 
   // LLM
   ANTHROPIC_API_KEY: z.string().min(1, 'ANTHROPIC_API_KEY é obrigatória'),
-  ANTHROPIC_MODEL: z.string().default('claude-sonnet-4-20250514'),
+  ANTHROPIC_MODEL: z.string().default('claude-sonnet-4-5'),
 
   // Transcrição de áudio (opcional)
   OPENAI_API_KEY: z.string().optional(),
