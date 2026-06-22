@@ -26,7 +26,7 @@ function isRetryableError(err: unknown): boolean {
 }
 
 async function callAnthropicWithRetry(
-  params: Parameters<(typeof anthropic.messages)['create']>[0],
+  params: Anthropic.MessageCreateParamsNonStreaming,
   attempt = 0,
 ): Promise<Anthropic.Message> {
   try {
