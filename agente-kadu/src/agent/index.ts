@@ -13,6 +13,34 @@ import type { IncomingMessage, Lead } from '../types';
 const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
 const MAX_TOOL_ITERATIONS = 5;
+const MAX_RETRIES = 3;
+const RETRY_BASE_DELAY_MS = 2000;
+
+function isRetryableError(err: unknown): boolean {
+  if (err instanceof Error) {
+    const code = (err as NodeJS.ErrnoException).code;
+    if (code === 'ERR_STREAM_PREMATURE_CLOSE' || code === 'ECONNRESET' || code === 'ETIMEDOUT') return true;
+    if (err.constructor.name === 'FetchError') return true;
+  }
+  return false;
+}
+
+async function callAnthropicWithRetry(
+  params: Parameters<(typeof anthropic.messages)['create']>[0],
+  attempt = 0,
+): Promise<Anthropic.Message> {
+  try {
+    return await anthropic.messages.create(params);
+  } catch (err) {
+    if (attempt < MAX_RETRIES && isRetryableError(err)) {
+      const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
+      logger.warn({ err, attempt: attempt + 1, delayMs: delay }, 'Erro de rede na API Anthropic — tentando novamente');
+      await new Promise((r) => setTimeout(r, delay));
+      return callAnthropicWithRetry(params, attempt + 1);
+    }
+    throw err;
+  }
+}
 
 /** Duração da pausa do agente após um humano responder manualmente (RF — atendimento humano). */
 const PAUSA_ATENDIMENTO_HUMANO_MS = 24 * 60 * 60 * 1000;
@@ -112,7 +140,7 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
   let currentLead = lead;
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-    const response = await anthropic.messages.create({
+    const response = await callAnthropicWithRetry({
       model: env.ANTHROPIC_MODEL,
       max_tokens: 1024,
       system: buildSystemPrompt(currentLead),
