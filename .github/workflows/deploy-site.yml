@@ -21,3 +21,4 @@ jobs:
           port:       21
           local-dir:  ./SITE/
           server-dir: ./public_html/
+          state-name: .ftp-deploy-sync-state-v2.json
