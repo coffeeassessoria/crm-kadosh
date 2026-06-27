@@ -20,5 +20,5 @@ jobs:
           password:   ${{ secrets.FTP_PASS }}
           port:       21
           local-dir:  ./SITE/
-          server-dir: ./public_html/
-          state-name: .ftp-deploy-sync-state-v2.json
+          server-dir: ./
+          state-name: .ftp-deploy-sync-state-v3.json
