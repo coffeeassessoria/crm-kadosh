@@ -1,4 +1,3 @@
-import type Anthropic from '@anthropic-ai/sdk';
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
 import type { Agendamento, AgendaItem, Lead, PixSolicitacao } from '../types';
@@ -95,8 +94,11 @@ export async function logMensagem(
   if (error) logger.error({ error, leadId }, 'Falha ao registrar mensagem (auditoria)');
 }
 
-/** Recupera as últimas mensagens da conversa no formato esperado pela API da Anthropic. */
-export async function getConversationHistory(leadId: string, limit = 20): Promise<Anthropic.MessageParam[]> {
+/** Recupera as últimas mensagens da conversa no formato genérico (user/assistant). */
+export async function getConversationHistory(
+  leadId: string,
+  limit = 20,
+): Promise<{ role: 'user' | 'assistant'; content: string }[]> {
   const { data, error } = await supabase
     .from('mensagens')
     .select('direcao, conteudo')

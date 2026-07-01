@@ -6,8 +6,8 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 
   // LLM
-  ANTHROPIC_API_KEY: z.string().min(1, 'ANTHROPIC_API_KEY é obrigatória'),
-  ANTHROPIC_MODEL: z.string().default('claude-haiku-4-5-20251001'),
+  GOOGLE_AI_API_KEY: z.string().min(1, 'GOOGLE_AI_API_KEY é obrigatória'),
+  GOOGLE_AI_MODEL: z.string().default('gemini-2.0-flash'),
 
   // Transcrição de áudio (opcional)
   OPENAI_API_KEY: z.string().optional(),

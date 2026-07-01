@@ -1,9 +1,9 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 import { env } from '../config/env';
 import { logger } from '../lib/logger';
 import { getConversationHistory, updateResumoConversa } from './crm.service';
 
-const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+const ai = new GoogleGenAI({ apiKey: env.GOOGLE_AI_API_KEY });
 
 const SYSTEM_PROMPT = `Você é um analista de vendas da Kadosh Mini Caçambas. Analise a conversa abaixo entre o cliente e o agente de vendas (Kadu) e gere um resumo objetivo em português para orientar o próximo atendimento.
 
@@ -16,7 +16,7 @@ O resumo deve conter (quando disponível):
 Seja conciso (máximo 5 linhas). Responda apenas com o resumo, sem títulos ou marcadores.`;
 
 /**
- * Gera um resumo da conversa do lead usando Claude Haiku e salva no CRM.
+ * Gera um resumo da conversa do lead usando Gemini Flash e salva no CRM.
  * Chamada de forma assíncrona — não bloqueia a resposta ao cliente.
  */
 export async function generateAndSaveConversationSummary(leadId: string): Promise<void> {
@@ -31,16 +31,18 @@ export async function generateAndSaveConversationSummary(leadId: string): Promis
     })
     .join('\n');
 
-  const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 300,
-    system: SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: conversationText }],
+  const response = await ai.models.generateContent({
+    model: env.GOOGLE_AI_MODEL,
+    contents: [{ role: 'user', parts: [{ text: conversationText }] }],
+    config: {
+      systemInstruction: SYSTEM_PROMPT,
+      maxOutputTokens: 300,
+    },
   });
 
-  const textBlock = response.content.find((b): b is Anthropic.TextBlock => b.type === 'text');
-  if (!textBlock) return;
+  const resumo = (response.text ?? '').trim();
+  if (!resumo) return;
 
-  await updateResumoConversa(leadId, textBlock.text.trim());
+  await updateResumoConversa(leadId, resumo);
   logger.debug({ leadId }, 'Resumo da conversa gerado e salvo');
 }

@@ -1,16 +1,16 @@
-import type Anthropic from '@anthropic-ai/sdk';
+import type { FunctionDeclaration } from '@google/genai';
 
 /**
  * Tools disponíveis para o agente Kadu (PRD seção 6 — "TOOLS DISPONÍVEIS").
  * As implementações ficam em ./toolHandlers.ts.
  */
-export const agentTools: Anthropic.Tool[] = [
+export const agentTools: FunctionDeclaration[] = [
   {
     name: 'save_address',
     description:
       'Salva no CRM o endereço completo de entrega (rua, número, CEP e ponto de referência/complemento) ' +
       'e o bairro, se o cliente mencionar. Chame assim que o cliente informar o endereço de entrega.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         endereco_completo: {
@@ -27,7 +27,7 @@ export const agentTools: Anthropic.Tool[] = [
     description:
       'Verifica a disponibilidade de agenda para uma data de entrega, evitando conflitos (RF03.4). ' +
       'Chame antes de propor uma data ao cliente.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         data: { type: 'string', description: 'Data desejada no formato YYYY-MM-DD' },
@@ -41,7 +41,7 @@ export const agentTools: Anthropic.Tool[] = [
     description:
       'Cria o agendamento da locação no CRM e, se configurado, no Google Agenda (RF03.1/RF03.2). ' +
       'Use somente após o cliente confirmar a proposta (e após confirm_pix, se o sinal foi solicitado).',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         nome_cliente: { type: 'string' },
@@ -85,7 +85,7 @@ export const agentTools: Anthropic.Tool[] = [
     description:
       'Registra a solicitação de sinal via PIX (50% do valor total) quando a entrega for para mais de 3 dias (RF04.1/RF04.2). ' +
       'Retorna a chave PIX a ser enviada ao cliente.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         valor_sinal: { type: 'number', description: '50% do valor total da locação' },
@@ -98,7 +98,7 @@ export const agentTools: Anthropic.Tool[] = [
     description:
       'Confirma o recebimento do comprovante de PIX e libera a criação do agendamento (RF04.3/RF04.5). ' +
       'Use o pix_solicitacao_id retornado por send_pix_request.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         pix_solicitacao_id: { type: 'string' },
@@ -115,7 +115,7 @@ export const agentTools: Anthropic.Tool[] = [
     description:
       'Escala a conversa para um atendente humano, registrando motivo e contexto no CRM (RNF03.2). ' +
       'Use em reclamações, negociação de preço fora da política ou quando inseguro sobre alguma informação.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         motivo: { type: 'string', description: 'Motivo curto da escalação' },
@@ -132,7 +132,7 @@ export const agentTools: Anthropic.Tool[] = [
       'demonstrar dúvida sobre o tamanho ou aparência do produto, ' +
       'perguntar se é uma empresa confiável, ou hesitar antes de fechar o agendamento. ' +
       'Não use mais de uma vez por conversa.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {},
     },
@@ -143,7 +143,7 @@ export const agentTools: Anthropic.Tool[] = [
       'Marca o lead como "perdido" no CRM quando a negociação não avança (cliente desiste, está fora ' +
       'de Sinop-MT, pede material não aceito sem alternativa, some da conversa, etc.), para a equipe ' +
       'fazer follow-up posterior. NUNCA chame esta tool se o agendamento já foi criado.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         motivo: { type: 'string', description: 'Motivo curto e objetivo pelo qual a negociação não avançou' },

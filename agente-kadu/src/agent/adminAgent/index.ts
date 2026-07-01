@@ -1,4 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
+import type { Content, Part } from '@google/genai';
 import { env } from '../../config/env';
 import { logger } from '../../lib/logger';
 import * as whatsapp from '../../services/whatsapp.service';
@@ -8,7 +9,7 @@ import { runAdminTool } from './toolHandlers';
 import { buildAdminSystemPrompt } from './systemPrompt';
 import type { IncomingMessage } from '../../types';
 
-const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+const ai = new GoogleGenAI({ apiKey: env.GOOGLE_AI_API_KEY });
 
 const MAX_TOOL_ITERATIONS = 5;
 
@@ -23,9 +24,7 @@ const TRIGGER_REGEX = new RegExp(`\\b${escapeRegExp(env.AGENTE_ADMIN_TRIGGER)}\\
  * Agente administrativo/financeiro ("Kadu Financeiro") — responde no grupo operacional
  * do WhatsApp quando mencionado pela palavra-gatilho (env.AGENTE_ADMIN_TRIGGER).
  *
- * Diferente do agente SDR (ver ../index.ts), esta conversa é STATELESS: cada menção
- * é tratada como uma pergunta independente, sem histórico de mensagens nem lead
- * associado — as tools sempre buscam dados frescos do CRM.
+ * Conversa STATELESS: cada menção é tratada como pergunta independente.
  */
 export async function handleAdminGroupMessage(msg: IncomingMessage): Promise<void> {
   if (msg.type !== 'text' || !msg.text || !msg.groupJid) return;
@@ -36,33 +35,37 @@ export async function handleAdminGroupMessage(msg: IncomingMessage): Promise<voi
     return;
   }
 
-  const messages: Anthropic.MessageParam[] = [{ role: 'user', content: msg.text }];
+  const contents: Content[] = [{ role: 'user', parts: [{ text: msg.text }] }];
 
   let finalText = '';
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-    const response = await anthropic.messages.create({
-      model: env.ANTHROPIC_MODEL,
-      max_tokens: 1024,
-      system: buildAdminSystemPrompt(),
-      tools: adminTools,
-      messages,
+    const response = await ai.models.generateContent({
+      model: env.GOOGLE_AI_MODEL,
+      contents,
+      config: {
+        systemInstruction: buildAdminSystemPrompt(),
+        tools: [{ functionDeclarations: adminTools }],
+        maxOutputTokens: 1024,
+      },
     });
 
-    const toolUses = response.content.filter((block): block is Anthropic.ToolUseBlock => block.type === 'tool_use');
-    const textBlocks = response.content.filter((block): block is Anthropic.TextBlock => block.type === 'text');
-    finalText = textBlocks.map((block) => block.text).join('\n').trim();
+    const functionCalls = response.functionCalls ?? [];
+    finalText = (response.text ?? '').trim();
 
-    if (toolUses.length === 0) break;
+    if (functionCalls.length === 0) break;
 
-    messages.push({ role: 'assistant', content: response.content });
+    const modelContent = response.candidates?.[0]?.content;
+    if (modelContent) contents.push(modelContent);
 
-    const toolResults: Anthropic.ToolResultBlockParam[] = [];
-    for (const toolUse of toolUses) {
-      const result = await runAdminTool(toolUse.name, toolUse.input as Record<string, unknown>);
-      toolResults.push({ type: 'tool_result', tool_use_id: toolUse.id, content: JSON.stringify(result) });
+    const functionResponseParts: Part[] = [];
+    for (const fc of functionCalls) {
+      const result = await runAdminTool(fc.name, fc.args as Record<string, unknown>);
+      functionResponseParts.push({
+        functionResponse: { name: fc.name, response: result as Record<string, unknown> },
+      });
     }
-    messages.push({ role: 'user', content: toolResults });
+    contents.push({ role: 'user', parts: functionResponseParts });
   }
 
   if (finalText) {

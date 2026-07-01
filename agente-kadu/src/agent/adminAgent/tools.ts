@@ -1,23 +1,22 @@
-import type Anthropic from '@anthropic-ai/sdk';
+import type { FunctionDeclaration } from '@google/genai';
 
 /**
  * Tools disponíveis para o agente administrativo/financeiro ("Kadu Financeiro"),
  * usado no grupo operacional do WhatsApp. Todas read-only (v1).
  * As implementações ficam em ./toolHandlers.ts.
  */
-export const adminTools: Anthropic.Tool[] = [
+export const adminTools: FunctionDeclaration[] = [
   {
     name: 'get_agenda',
     description:
       'Retorna as entregas e retiradas confirmadas para o período pedido, com endereço, ' +
       'cliente, horário e link de rota. Use "hoje" como padrão se o período não for especificado.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         periodo: {
           type: 'string',
-          enum: ['hoje', 'amanha', 'semana'],
-          description: '"semana" cobre os próximos 7 dias (hoje + 6)',
+          description: '"hoje", "amanha" ou "semana" (próximos 7 dias)',
         },
       },
       required: ['periodo'],
@@ -29,13 +28,12 @@ export const adminTools: Anthropic.Tool[] = [
       'Retorna o faturamento confirmado (agendamentos com status confirmado, por data de entrega) ' +
       'e o status dos sinais PIX (pendentes e confirmados, com quantidade e valor) no período pedido. ' +
       'Use "mes" (mês corrente) como padrão se o período não for especificado.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         periodo: {
           type: 'string',
-          enum: ['hoje', 'semana', 'mes'],
-          description: '"semana" cobre os próximos 7 dias (hoje + 6); "mes" é o mês corrente',
+          description: '"hoje", "semana" (próximos 7 dias) ou "mes" (mês corrente)',
         },
       },
       required: ['periodo'],
@@ -46,7 +44,7 @@ export const adminTools: Anthropic.Tool[] = [
     description:
       'Retorna a contagem de leads por etapa do Kanban (Novo, Em Contato, Agendado, ' +
       'Sinal Pendente, Escalado, Convertido, Perdido).',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {},
     },
@@ -57,7 +55,7 @@ export const adminTools: Anthropic.Tool[] = [
       'Marca a entrega como realizada: encontra o lead pelo nome ou telefone, define o status ' +
       'do lead como "convertido" no CRM e registra no histórico. ' +
       'Se a busca retornar mais de um lead, liste os resultados e peça que o usuário seja mais específico.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         nome_ou_telefone: {
@@ -74,7 +72,7 @@ export const adminTools: Anthropic.Tool[] = [
       'Cria um novo cadastro de cliente no CRM (lead com status "convertido" e cliente_desde = hoje). ' +
       'Use quando o cliente entrou em contato por outro canal (ligação, presencial, etc.) ' +
       'e não tem registro no WhatsApp/agente.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         nome: { type: 'string', description: 'Nome completo do cliente' },
@@ -95,7 +93,7 @@ export const adminTools: Anthropic.Tool[] = [
       'Encontra ou cria o lead pelo telefone. ' +
       'O valor total é calculado automaticamente (R$ PRECO × qtde + DIARIA_ADICIONAL × dias extras) ' +
       'a menos que seja fornecido explicitamente.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         nome_cliente: { type: 'string', description: 'Nome do cliente' },
@@ -127,7 +125,7 @@ export const adminTools: Anthropic.Tool[] = [
       'Libera um lead de volta para o atendimento automático do Kadu, zerando o bloqueio de ' +
       'atendimento humano. Use quando você terminou de atender manualmente e quer que o Kadu ' +
       'volte a responder. Informe o nome ou telefone do lead, ou "todos" para liberar todos.',
-    input_schema: {
+    parameters: {
       type: 'object',
       properties: {
         nome_ou_telefone: {

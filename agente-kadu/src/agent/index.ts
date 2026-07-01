@@ -1,4 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
+import type { Content, Part } from '@google/genai';
 import { env } from '../config/env';
 import { logger } from '../lib/logger';
 import * as crm from '../services/crm.service';
@@ -10,7 +11,7 @@ import { runTool } from './toolHandlers';
 import { buildSystemPrompt } from './systemPrompt';
 import type { IncomingMessage, Lead } from '../types';
 
-const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+const ai = new GoogleGenAI({ apiKey: env.GOOGLE_AI_API_KEY });
 
 const MAX_TOOL_ITERATIONS = 5;
 const MAX_RETRIES = 3;
@@ -25,18 +26,27 @@ function isRetryableError(err: unknown): boolean {
   return false;
 }
 
-async function callAnthropicWithRetry(
-  params: Anthropic.MessageCreateParamsNonStreaming,
+async function callGeminiWithRetry(
+  contents: Content[],
+  systemInstruction: string,
   attempt = 0,
-): Promise<Anthropic.Message> {
+) {
   try {
-    return await anthropic.messages.create(params);
+    return await ai.models.generateContent({
+      model: env.GOOGLE_AI_MODEL,
+      contents,
+      config: {
+        systemInstruction,
+        tools: [{ functionDeclarations: agentTools }],
+        maxOutputTokens: 1024,
+      },
+    });
   } catch (err) {
     if (attempt < MAX_RETRIES && isRetryableError(err)) {
       const delay = RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
-      logger.warn({ err, attempt: attempt + 1, delayMs: delay }, 'Erro de rede na API Anthropic — tentando novamente');
+      logger.warn({ err, attempt: attempt + 1, delayMs: delay }, 'Erro de rede na API Gemini — tentando novamente');
       await new Promise((r) => setTimeout(r, delay));
-      return callAnthropicWithRetry(params, attempt + 1);
+      return callGeminiWithRetry(contents, systemInstruction, attempt + 1);
     }
     throw err;
   }
@@ -50,54 +60,46 @@ function isHumanTakeoverActive(lead: Lead): boolean {
   return Date.now() - new Date(lead.atendimento_humano_em).getTime() < PAUSA_ATENDIMENTO_HUMANO_MS;
 }
 
-/** Tipos de imagem aceitos pela API de visão da Anthropic. */
+/** Tipos de imagem aceitos pela API de visão do Gemini. */
 const SUPPORTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
 
-/** RF01.4 — converte a mensagem recebida (texto/imagem/áudio/vídeo) em conteúdo para o Claude. */
-async function buildUserContent(msg: IncomingMessage): Promise<Anthropic.MessageParam['content']> {
+/** RF01.4 — converte a mensagem recebida (texto/imagem/áudio/vídeo) em partes para o Gemini. */
+async function buildUserParts(msg: IncomingMessage): Promise<Part[]> {
   switch (msg.type) {
     case 'text':
-      return msg.text ?? '';
+      return [{ text: msg.text ?? '' }];
 
     case 'image': {
       const { buffer, mimeType } = await whatsapp.downloadMedia(msg.messageKey);
       if (!SUPPORTED_IMAGE_TYPES.has(mimeType)) {
-        return 'Cliente enviou uma imagem em formato não suportado. Peça para descrever o que enviou.';
+        return [{ text: 'Cliente enviou uma imagem em formato não suportado. Peça para descrever o que enviou.' }];
       }
-
-      const content: Anthropic.MessageParam['content'] = [
-        {
-          type: 'image',
-          source: {
-            type: 'base64',
-            media_type: mimeType as Anthropic.ImageBlockParam.Source['media_type'],
-            data: buffer.toString('base64'),
-          },
-        },
-        { type: 'text', text: msg.text || 'Cliente enviou esta imagem.' },
+      return [
+        { inlineData: { mimeType, data: buffer.toString('base64') } },
+        { text: msg.text || 'Cliente enviou esta imagem.' },
       ];
-      return content;
     }
 
     case 'audio': {
       const { buffer, mimeType } = await whatsapp.downloadMedia(msg.messageKey);
       const transcript = await transcribeAudio(buffer, mimeType);
-
-      return transcript
-        ? `[Áudio transcrito]: ${transcript}`
-        : '[Cliente enviou um áudio, mas não foi possível transcrever automaticamente]';
+      return [{
+        text: transcript
+          ? `[Áudio transcrito]: ${transcript}`
+          : '[Cliente enviou um áudio, mas não foi possível transcrever automaticamente]',
+      }];
     }
 
     case 'video':
-      return '[Cliente enviou um vídeo. Vídeos ainda não são processados automaticamente — peça para descrever em texto.]';
+      return [{ text: '[Cliente enviou um vídeo. Vídeos ainda não são processados automaticamente — peça para descrever em texto.]' }];
 
     default:
-      return `[Cliente enviou um conteúdo do tipo "${msg.type}", ainda não suportado. Peça para escrever a mensagem.]`;
+      return [{ text: `[Cliente enviou um conteúdo do tipo "${msg.type}", ainda não suportado. Peça para escrever a mensagem.]` }];
   }
 }
 
 /**
- * Mensagem enviada pelo próprio número (fromMe: true) — um humano (Adriano) respondeu
+ * Mensagem enviada pelo próprio número (fromMe: true) — um humano respondeu
  * manualmente a um lead. Registra a mensagem no histórico e pausa o agente Kadu por 24h
  * para esse lead (RF — atendimento humano).
  */
@@ -110,7 +112,7 @@ export async function handleHumanTakeover(msg: IncomingMessage): Promise<void> {
   logger.info({ leadId: lead.id }, 'Atendimento humano detectado — agente Kadu pausado por 24h para este lead');
 }
 
-/** RF01 — recebe uma mensagem do WhatsApp, conversa com o LLM e responde ao cliente. */
+/** RF01 — recebe uma mensagem do WhatsApp, conversa com o Gemini e responde ao cliente. */
 export async function handleIncomingMessage(msg: IncomingMessage): Promise<void> {
   const lead = await crm.findOrCreateLeadByPhone(msg.from, msg.name);
 
@@ -118,50 +120,54 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
 
   if (isHumanTakeoverActive(lead)) {
     logger.info({ leadId: lead.id }, 'Atendimento humano ativo — agente Kadu não responde');
-    // Ainda registra a mensagem recebida mesmo sem responder
     await crm.logMensagem(lead.id, 'inbound', msg.type, msg.text ?? `[${msg.type}]`, msg.messageId);
     return;
   }
 
-  // Processa o conteúdo antes de logar para capturar a transcrição real do áudio
-  const userContent = await buildUserContent(msg);
+  const userParts = await buildUserParts(msg);
 
   // Para áudio, salva o texto transcrito em vez de "[audio]"
   const logConteudo =
-    typeof userContent === 'string' && userContent.startsWith('[Áudio transcrito]:')
-      ? userContent
+    userParts.length === 1 && 'text' in userParts[0] && (userParts[0].text ?? '').startsWith('[Áudio transcrito]:')
+      ? userParts[0].text!
       : msg.text ?? `[${msg.type}]`;
-  await crm.logMensagem(lead.id, 'inbound', msg.type, logConteudo, msg.messageId);
-  const history = await crm.getConversationHistory(lead.id, 20);
 
-  const messages: Anthropic.MessageParam[] = [...history, { role: 'user', content: userContent }];
+  await crm.logMensagem(lead.id, 'inbound', msg.type, logConteudo, msg.messageId);
+
+  // Monta histórico no formato do Gemini (user/model)
+  const history = await crm.getConversationHistory(lead.id, 20);
+  const contents: Content[] = [
+    ...history.map((m) => ({
+      role: m.role === 'assistant' ? ('model' as const) : ('user' as const),
+      parts: [{ text: typeof m.content === 'string' ? m.content : JSON.stringify(m.content) }],
+    })),
+    { role: 'user' as const, parts: userParts },
+  ];
 
   let finalText = '';
   let currentLead = lead;
 
   for (let iteration = 0; iteration < MAX_TOOL_ITERATIONS; iteration++) {
-    const response = await callAnthropicWithRetry({
-      model: env.ANTHROPIC_MODEL,
-      max_tokens: 1024,
-      system: buildSystemPrompt(currentLead),
-      tools: agentTools,
-      messages,
-    });
+    const response = await callGeminiWithRetry(contents, buildSystemPrompt(currentLead));
 
-    const toolUses = response.content.filter((block): block is Anthropic.ToolUseBlock => block.type === 'tool_use');
-    const textBlocks = response.content.filter((block): block is Anthropic.TextBlock => block.type === 'text');
-    finalText = textBlocks.map((block) => block.text).join('\n').trim();
+    const functionCalls = response.functionCalls ?? [];
+    finalText = (response.text ?? '').trim();
 
-    if (toolUses.length === 0) break;
+    if (functionCalls.length === 0) break;
 
-    messages.push({ role: 'assistant', content: response.content });
+    // Adiciona resposta do modelo ao histórico (contém os function calls)
+    const modelContent = response.candidates?.[0]?.content;
+    if (modelContent) contents.push(modelContent);
 
-    const toolResults: Anthropic.ToolResultBlockParam[] = [];
-    for (const toolUse of toolUses) {
-      const result = await runTool(toolUse.name, toolUse.input as Record<string, unknown>, currentLead);
-      toolResults.push({ type: 'tool_result', tool_use_id: toolUse.id, content: JSON.stringify(result) });
+    // Executa as tools e coleta os resultados
+    const functionResponseParts: Part[] = [];
+    for (const fc of functionCalls) {
+      const result = await runTool(fc.name, fc.args as Record<string, unknown>, currentLead);
+      functionResponseParts.push({
+        functionResponse: { name: fc.name, response: result as Record<string, unknown> },
+      });
     }
-    messages.push({ role: 'user', content: toolResults });
+    contents.push({ role: 'user', parts: functionResponseParts });
 
     // Recarrega o lead, pois as tools podem ter atualizado dados usados no próximo system prompt.
     const refreshed = await crm.findOrCreateLeadByPhone(msg.from);
