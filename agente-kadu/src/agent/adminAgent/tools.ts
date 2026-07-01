@@ -121,4 +121,21 @@ export const adminTools: Anthropic.Tool[] = [
       required: ['nome_cliente', 'telefone', 'endereco_completo', 'bairro', 'tipo_residuo', 'quantidade_cacambas', 'data_entrega'],
     },
   },
+  {
+    name: 'liberar_kadu',
+    description:
+      'Libera um lead de volta para o atendimento automático do Kadu, zerando o bloqueio de ' +
+      'atendimento humano. Use quando você terminou de atender manualmente e quer que o Kadu ' +
+      'volte a responder. Informe o nome ou telefone do lead, ou "todos" para liberar todos.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        nome_ou_telefone: {
+          type: 'string',
+          description: 'Nome (parcial) ou telefone do lead, ou a palavra "todos" para liberar todos os leads bloqueados',
+        },
+      },
+      required: ['nome_ou_telefone'],
+    },
+  },
 ];

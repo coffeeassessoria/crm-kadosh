@@ -50,6 +50,16 @@ export async function updateResumoConversa(leadId: string, resumo: string): Prom
   if (error) logger.error({ error, leadId }, 'Falha ao salvar resumo da conversa');
 }
 
+/** Libera o lead de volta para o Kadu, zerando o flag de atendimento humano. */
+export async function liberarParaKadu(leadId: string): Promise<void> {
+  const { error } = await supabase
+    .from('leads')
+    .update({ atendimento_humano_em: null })
+    .eq('id', leadId);
+
+  if (error) logger.error({ error, leadId }, 'Falha ao liberar lead para o Kadu');
+}
+
 /** Registra que um humano respondeu manualmente — pausa o agente Kadu por 24h para este lead. */
 export async function setAtendimentoHumano(leadId: string, timestamp: Date): Promise<void> {
   const { error } = await supabase

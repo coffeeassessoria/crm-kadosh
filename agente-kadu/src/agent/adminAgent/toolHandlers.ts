@@ -256,6 +256,47 @@ export async function runAdminTool(name: string, input: Record<string, unknown>)
       };
     }
 
+    case 'liberar_kadu': {
+      const query = String(input.nome_ou_telefone ?? '').trim();
+
+      if (query.toLowerCase() === 'todos') {
+        const { data: bloqueados, error } = await (await import('../../lib/supabase')).supabase
+          .from('leads')
+          .select('id, nome')
+          .not('atendimento_humano_em', 'is', null);
+
+        if (error) return { erro: 'Falha ao buscar leads bloqueados.' };
+        if (!bloqueados || bloqueados.length === 0) return { liberados: 0, mensagem: 'Nenhum lead bloqueado no momento.' };
+
+        await Promise.all(bloqueados.map((l: { id: string }) => crm.liberarParaKadu(l.id)));
+
+        return {
+          liberados: bloqueados.length,
+          mensagem: `${bloqueados.length} lead(s) liberado(s) para o Kadu.`,
+        };
+      }
+
+      const leads = await crm.findLeadsByNomeOuTelefone(query);
+
+      if (leads.length === 0) return { encontrado: false, mensagem: `Nenhum lead encontrado para "${query}".` };
+      if (leads.length > 1) return {
+        encontrado: false,
+        multiplos: true,
+        opcoes: leads.map((l) => ({ nome: l.nome, telefone: l.telefone, bloqueado: !!l.atendimento_humano_em })),
+        mensagem: `${leads.length} leads encontrados. Seja mais específico.`,
+      };
+
+      const lead = leads[0];
+      await crm.liberarParaKadu(lead.id);
+      await crm.addHistorico(lead.id, 'liberado', 'Lead liberado para atendimento automático pelo Kadu via comando no grupo.');
+
+      return {
+        liberado: true,
+        nome: lead.nome,
+        mensagem: `*${lead.nome}* liberado — Kadu vai responder normalmente a partir de agora.`,
+      };
+    }
+
     default:
       logger.warn({ tool: name }, 'Tool desconhecida solicitada pelo agente administrativo');
       return { erro: `Tool desconhecida: ${name}` };

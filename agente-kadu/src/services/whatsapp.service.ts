@@ -21,6 +21,14 @@ function trackBotMessage(id: string) {
   setTimeout(() => botMessageIds.delete(id), 5 * 60 * 1000);
 }
 
+function trackOrWarn(result: { key?: { id?: string } }, context: string) {
+  if (result?.key?.id) {
+    trackBotMessage(result.key.id);
+  } else {
+    logger.warn({ result, context }, 'Evolution API não retornou key.id — resposta do bot pode acionar handleHumanTakeover');
+  }
+}
+
 async function callEvolutionApi(path: string, body: Record<string, unknown>) {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
@@ -43,7 +51,7 @@ async function callEvolutionApi(path: string, body: Record<string, unknown>) {
 /** RF01.1 / RF03.3 / RF05 — envia mensagem de texto para um contato ou grupo. */
 export async function sendTextMessage(to: string, text: string) {
   const result = await callEvolutionApi(`/message/sendText/${INSTANCE}`, { number: to, text }) as { key?: { id?: string } };
-  if (result?.key?.id) trackBotMessage(result.key.id);
+  trackOrWarn(result, 'sendTextMessage');
   return result;
 }
 
@@ -57,7 +65,7 @@ export async function sendImageMessage(to: string, imageUrl: string, caption?: s
     media: imageUrl,
     fileName: 'cacamba-kadosh.jpg',
   }) as { key?: { id?: string } };
-  if (result?.key?.id) trackBotMessage(result.key.id);
+  trackOrWarn(result, 'sendImageMessage');
   return result;
 }
 
