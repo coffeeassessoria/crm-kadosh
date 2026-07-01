@@ -5,6 +5,22 @@ import type { IncomingMessage, MessageKey } from '../types';
 const BASE_URL = env.EVOLUTION_API_URL;
 const INSTANCE = env.EVOLUTION_INSTANCE;
 
+/**
+ * IDs de mensagens enviadas via API pelo próprio Kadu — usados para distinguir
+ * respostas automáticas do bot de mensagens manuais do operador humano.
+ * TTL de 5 min por entrada para evitar crescimento ilimitado.
+ */
+const botMessageIds = new Set<string>();
+
+export function isBotMessage(messageId: string): boolean {
+  return botMessageIds.has(messageId);
+}
+
+function trackBotMessage(id: string) {
+  botMessageIds.add(id);
+  setTimeout(() => botMessageIds.delete(id), 5 * 60 * 1000);
+}
+
 async function callEvolutionApi(path: string, body: Record<string, unknown>) {
   const res = await fetch(`${BASE_URL}${path}`, {
     method: 'POST',
@@ -26,22 +42,23 @@ async function callEvolutionApi(path: string, body: Record<string, unknown>) {
 
 /** RF01.1 / RF03.3 / RF05 — envia mensagem de texto para um contato ou grupo. */
 export async function sendTextMessage(to: string, text: string) {
-  return callEvolutionApi(`/message/sendText/${INSTANCE}`, {
-    number: to,
-    text,
-  });
+  const result = await callEvolutionApi(`/message/sendText/${INSTANCE}`, { number: to, text }) as { key?: { id?: string } };
+  if (result?.key?.id) trackBotMessage(result.key.id);
+  return result;
 }
 
 /** Envia uma imagem a partir de URL pública para um contato. Legenda é opcional. */
 export async function sendImageMessage(to: string, imageUrl: string, caption?: string) {
-  return callEvolutionApi(`/message/sendMedia/${INSTANCE}`, {
+  const result = await callEvolutionApi(`/message/sendMedia/${INSTANCE}`, {
     number: to,
     mediatype: 'image',
     mimetype: 'image/jpeg',
     caption: caption ?? '',
     media: imageUrl,
     fileName: 'cacamba-kadosh.jpg',
-  });
+  }) as { key?: { id?: string } };
+  if (result?.key?.id) trackBotMessage(result.key.id);
+  return result;
 }
 
 /** Marca a mensagem recebida como lida no WhatsApp. */

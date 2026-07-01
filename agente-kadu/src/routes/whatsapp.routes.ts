@@ -4,7 +4,7 @@ import { handleIncomingMessage, handleHumanTakeover } from '../agent';
 import { handleAdminGroupMessage } from '../agent/adminAgent';
 import { isWithinRateLimit } from '../middleware/rateLimiter';
 import { verifyWebhookSecret } from '../middleware/verifyWebhookSecret';
-import { parseIncomingMessages } from '../services/whatsapp.service';
+import { parseIncomingMessages, isBotMessage } from '../services/whatsapp.service';
 import { env } from '../config/env';
 
 export const whatsappRouter = Router();
@@ -32,6 +32,7 @@ whatsappRouter.post('/webhook/whatsapp/:secret', verifyWebhookSecret, (req, res)
     }
 
     if (message.fromMe) {
+      if (isBotMessage(message.messageId)) continue; // resposta do próprio Kadu — ignora
       handleHumanTakeover(message).catch((err) => {
         logger.error({ err, from: message.from }, 'Erro ao processar atendimento humano');
       });
