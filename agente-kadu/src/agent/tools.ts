@@ -1,4 +1,4 @@
-import type { FunctionDeclaration } from '@google/genai';
+import { type FunctionDeclaration, Type } from '@google/genai';
 
 /**
  * Tools disponíveis para o agente Kadu (PRD seção 6 — "TOOLS DISPONÍVEIS").
@@ -11,13 +11,13 @@ export const agentTools: FunctionDeclaration[] = [
       'Salva no CRM o endereço completo de entrega (rua, número, CEP e ponto de referência/complemento) ' +
       'e o bairro, se o cliente mencionar. Chame assim que o cliente informar o endereço de entrega.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
         endereco_completo: {
-          type: 'string',
+          type: Type.STRING,
           description: 'Endereço completo: rua, número, CEP e ponto de referência/complemento',
         },
-        bairro: { type: 'string', description: 'Bairro informado espontaneamente pelo cliente (opcional)' },
+        bairro: { type: Type.STRING, description: 'Bairro informado espontaneamente pelo cliente (opcional)' },
       },
       required: ['endereco_completo'],
     },
@@ -28,10 +28,10 @@ export const agentTools: FunctionDeclaration[] = [
       'Verifica a disponibilidade de agenda para uma data de entrega, evitando conflitos (RF03.4). ' +
       'Chame antes de propor uma data ao cliente.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
-        data: { type: 'string', description: 'Data desejada no formato YYYY-MM-DD' },
-        horario: { type: 'string', description: 'Horário aproximado (HH:MM), opcional' },
+        data: { type: Type.STRING, description: 'Data desejada no formato YYYY-MM-DD' },
+        horario: { type: Type.STRING, description: 'Horário aproximado (HH:MM), opcional' },
       },
       required: ['data'],
     },
@@ -42,28 +42,28 @@ export const agentTools: FunctionDeclaration[] = [
       'Cria o agendamento da locação no CRM e, se configurado, no Google Agenda (RF03.1/RF03.2). ' +
       'Use somente após o cliente confirmar a proposta (e após confirm_pix, se o sinal foi solicitado).',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
-        nome_cliente: { type: 'string' },
-        telefone: { type: 'string', description: 'Telefone do cliente (E.164, sem +)' },
-        endereco_completo: { type: 'string' },
-        bairro: { type: 'string' },
-        tipo_residuo: { type: 'string' },
-        quantidade_cacambas: { type: 'integer', minimum: 1 },
-        data_entrega: { type: 'string', description: 'Data de entrega no formato YYYY-MM-DD' },
+        nome_cliente: { type: Type.STRING },
+        telefone: { type: Type.STRING, description: 'Telefone do cliente (E.164, sem +)' },
+        endereco_completo: { type: Type.STRING },
+        bairro: { type: Type.STRING },
+        tipo_residuo: { type: Type.STRING },
+        quantidade_cacambas: { type: Type.INTEGER, minimum: 1 },
+        data_entrega: { type: Type.STRING, description: 'Data de entrega no formato YYYY-MM-DD' },
         horario_entrega: {
-          type: 'string',
+          type: Type.STRING,
           description: 'Horário de entrega no formato HH:MM (padrão: período da manhã)',
         },
         dias_permanencia: {
-          type: 'integer',
+          type: Type.INTEGER,
           minimum: 1,
           description:
             'Quantos dias a caçamba ficará no local. Padrão 1 (já incluso na diária). ' +
             'Cada dia adicional soma R$ DIARIA_ADICIONAL por caçamba ao valor_total.',
         },
         valor_total: {
-          type: 'number',
+          type: Type.NUMBER,
           description:
             'quantidade_cacambas x PRECO_LOCACAO, somado a quantidade_cacambas x (dias_permanencia - 1) x DIARIA_ADICIONAL',
         },
@@ -86,9 +86,9 @@ export const agentTools: FunctionDeclaration[] = [
       'Registra a solicitação de sinal via PIX (50% do valor total) quando a entrega for para mais de 3 dias (RF04.1/RF04.2). ' +
       'Retorna a chave PIX a ser enviada ao cliente.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
-        valor_sinal: { type: 'number', description: '50% do valor total da locação' },
+        valor_sinal: { type: Type.NUMBER, description: '50% do valor total da locação' },
       },
       required: ['valor_sinal'],
     },
@@ -99,11 +99,11 @@ export const agentTools: FunctionDeclaration[] = [
       'Confirma o recebimento do comprovante de PIX e libera a criação do agendamento (RF04.3/RF04.5). ' +
       'Use o pix_solicitacao_id retornado por send_pix_request.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
-        pix_solicitacao_id: { type: 'string' },
+        pix_solicitacao_id: { type: Type.STRING },
         comprovante_recebido: {
-          type: 'boolean',
+          type: Type.BOOLEAN,
           description: 'true se a imagem recebida parece um comprovante PIX válido',
         },
       },
@@ -116,10 +116,10 @@ export const agentTools: FunctionDeclaration[] = [
       'Escala a conversa para um atendente humano, registrando motivo e contexto no CRM (RNF03.2). ' +
       'Use em reclamações, negociação de preço fora da política ou quando inseguro sobre alguma informação.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
-        motivo: { type: 'string', description: 'Motivo curto da escalação' },
-        contexto: { type: 'string', description: 'Resumo do contexto da conversa para o atendente humano' },
+        motivo: { type: Type.STRING, description: 'Motivo curto da escalação' },
+        contexto: { type: Type.STRING, description: 'Resumo do contexto da conversa para o atendente humano' },
       },
       required: ['motivo', 'contexto'],
     },
@@ -133,7 +133,7 @@ export const agentTools: FunctionDeclaration[] = [
       'perguntar se é uma empresa confiável, ou hesitar antes de fechar o agendamento. ' +
       'Não use mais de uma vez por conversa.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {},
     },
   },
@@ -144,9 +144,9 @@ export const agentTools: FunctionDeclaration[] = [
       'de Sinop-MT, pede material não aceito sem alternativa, some da conversa, etc.), para a equipe ' +
       'fazer follow-up posterior. NUNCA chame esta tool se o agendamento já foi criado.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
-        motivo: { type: 'string', description: 'Motivo curto e objetivo pelo qual a negociação não avançou' },
+        motivo: { type: Type.STRING, description: 'Motivo curto e objetivo pelo qual a negociação não avançou' },
       },
       required: ['motivo'],
     },

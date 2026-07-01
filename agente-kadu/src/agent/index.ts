@@ -162,6 +162,7 @@ export async function handleIncomingMessage(msg: IncomingMessage): Promise<void>
     // Executa as tools e coleta os resultados
     const functionResponseParts: Part[] = [];
     for (const fc of functionCalls) {
+      if (!fc.name) continue;
       const result = await runTool(fc.name, fc.args as Record<string, unknown>, currentLead);
       functionResponseParts.push({
         functionResponse: { name: fc.name, response: result as Record<string, unknown> },

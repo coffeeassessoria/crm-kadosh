@@ -1,4 +1,4 @@
-import type { FunctionDeclaration } from '@google/genai';
+import { type FunctionDeclaration, Type } from '@google/genai';
 
 /**
  * Tools disponíveis para o agente administrativo/financeiro ("Kadu Financeiro"),
@@ -12,10 +12,10 @@ export const adminTools: FunctionDeclaration[] = [
       'Retorna as entregas e retiradas confirmadas para o período pedido, com endereço, ' +
       'cliente, horário e link de rota. Use "hoje" como padrão se o período não for especificado.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
         periodo: {
-          type: 'string',
+          type: Type.STRING,
           description: '"hoje", "amanha" ou "semana" (próximos 7 dias)',
         },
       },
@@ -29,10 +29,10 @@ export const adminTools: FunctionDeclaration[] = [
       'e o status dos sinais PIX (pendentes e confirmados, com quantidade e valor) no período pedido. ' +
       'Use "mes" (mês corrente) como padrão se o período não for especificado.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
         periodo: {
-          type: 'string',
+          type: Type.STRING,
           description: '"hoje", "semana" (próximos 7 dias) ou "mes" (mês corrente)',
         },
       },
@@ -45,7 +45,7 @@ export const adminTools: FunctionDeclaration[] = [
       'Retorna a contagem de leads por etapa do Kanban (Novo, Em Contato, Agendado, ' +
       'Sinal Pendente, Escalado, Convertido, Perdido).',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {},
     },
   },
@@ -56,10 +56,10 @@ export const adminTools: FunctionDeclaration[] = [
       'do lead como "convertido" no CRM e registra no histórico. ' +
       'Se a busca retornar mais de um lead, liste os resultados e peça que o usuário seja mais específico.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
         nome_ou_telefone: {
-          type: 'string',
+          type: Type.STRING,
           description: 'Nome (parcial) ou telefone (só dígitos) do cliente/lead',
         },
       },
@@ -73,15 +73,15 @@ export const adminTools: FunctionDeclaration[] = [
       'Use quando o cliente entrou em contato por outro canal (ligação, presencial, etc.) ' +
       'e não tem registro no WhatsApp/agente.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
-        nome: { type: 'string', description: 'Nome completo do cliente' },
-        telefone: { type: 'string', description: 'Telefone com DDD (só dígitos, ex: 55669XXXXXXXX)' },
-        endereco: { type: 'string', description: 'Endereço completo (opcional)' },
-        bairro: { type: 'string', description: 'Bairro (opcional)' },
-        cpf: { type: 'string', description: 'CPF (opcional)' },
-        email: { type: 'string', description: 'E-mail (opcional)' },
-        observacoes: { type: 'string', description: 'Observações sobre o cliente (opcional)' },
+        nome: { type: Type.STRING, description: 'Nome completo do cliente' },
+        telefone: { type: Type.STRING, description: 'Telefone com DDD (só dígitos, ex: 55669XXXXXXXX)' },
+        endereco: { type: Type.STRING, description: 'Endereço completo (opcional)' },
+        bairro: { type: Type.STRING, description: 'Bairro (opcional)' },
+        cpf: { type: Type.STRING, description: 'CPF (opcional)' },
+        email: { type: Type.STRING, description: 'E-mail (opcional)' },
+        observacoes: { type: Type.STRING, description: 'Observações sobre o cliente (opcional)' },
       },
       required: ['nome', 'telefone'],
     },
@@ -94,25 +94,25 @@ export const adminTools: FunctionDeclaration[] = [
       'O valor total é calculado automaticamente (R$ PRECO × qtde + DIARIA_ADICIONAL × dias extras) ' +
       'a menos que seja fornecido explicitamente.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
-        nome_cliente: { type: 'string', description: 'Nome do cliente' },
-        telefone: { type: 'string', description: 'Telefone com DDD (só dígitos)' },
-        endereco_completo: { type: 'string', description: 'Endereço de entrega completo' },
-        bairro: { type: 'string', description: 'Bairro da entrega' },
+        nome_cliente: { type: Type.STRING, description: 'Nome do cliente' },
+        telefone: { type: Type.STRING, description: 'Telefone com DDD (só dígitos)' },
+        endereco_completo: { type: Type.STRING, description: 'Endereço de entrega completo' },
+        bairro: { type: Type.STRING, description: 'Bairro da entrega' },
         tipo_residuo: {
-          type: 'string',
+          type: Type.STRING,
           description: 'Tipo de resíduo (ex: entulho, madeira, vegetação, misto)',
         },
-        quantidade_cacambas: { type: 'number', description: 'Número de caçambas' },
-        data_entrega: { type: 'string', description: 'Data de entrega no formato YYYY-MM-DD' },
-        horario_entrega: { type: 'string', description: 'Horário de entrega HH:MM (opcional)' },
+        quantidade_cacambas: { type: Type.NUMBER, description: 'Número de caçambas' },
+        data_entrega: { type: Type.STRING, description: 'Data de entrega no formato YYYY-MM-DD' },
+        horario_entrega: { type: Type.STRING, description: 'Horário de entrega HH:MM (opcional)' },
         dias_permanencia: {
-          type: 'number',
+          type: Type.NUMBER,
           description: 'Dias de permanência da caçamba no local (padrão 1 — já incluso na diária base)',
         },
         valor_total: {
-          type: 'number',
+          type: Type.NUMBER,
           description: 'Valor total acordado em R$ (opcional — calculado automaticamente se omitido)',
         },
       },
@@ -126,10 +126,10 @@ export const adminTools: FunctionDeclaration[] = [
       'atendimento humano. Use quando você terminou de atender manualmente e quer que o Kadu ' +
       'volte a responder. Informe o nome ou telefone do lead, ou "todos" para liberar todos.',
     parameters: {
-      type: 'object',
+      type: Type.OBJECT,
       properties: {
         nome_ou_telefone: {
-          type: 'string',
+          type: Type.STRING,
           description: 'Nome (parcial) ou telefone do lead, ou a palavra "todos" para liberar todos os leads bloqueados',
         },
       },

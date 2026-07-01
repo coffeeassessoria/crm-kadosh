@@ -19,7 +19,7 @@ healthRouter.get('/health', async (_req, res) => {
     env.EVOLUTION_API_URL && env.EVOLUTION_API_KEY && env.EVOLUTION_INSTANCE ? 'configurado' : 'nao_configurado';
   integrations.google_agenda =
     env.GOOGLE_SERVICE_ACCOUNT_EMAIL && env.GOOGLE_PRIVATE_KEY ? 'configurado' : 'nao_configurado';
-  integrations.anthropic = env.ANTHROPIC_API_KEY ? 'configurado' : 'nao_configurado';
+  integrations.google_ai = env.GOOGLE_AI_API_KEY ? 'configurado' : 'nao_configurado';
   integrations.transcricao_audio = env.OPENAI_API_KEY ? 'configurado' : 'nao_configurado';
 
   const healthy = integrations.crm === 'ok';

@@ -60,6 +60,7 @@ export async function handleAdminGroupMessage(msg: IncomingMessage): Promise<voi
 
     const functionResponseParts: Part[] = [];
     for (const fc of functionCalls) {
+      if (!fc.name) continue;
       const result = await runAdminTool(fc.name, fc.args as Record<string, unknown>);
       functionResponseParts.push({
         functionResponse: { name: fc.name, response: result as Record<string, unknown> },
