@@ -4,7 +4,7 @@ import { handleIncomingMessage, handleHumanTakeover } from '../agent';
 import { handleAdminGroupMessage } from '../agent/adminAgent';
 import { isWithinRateLimit } from '../middleware/rateLimiter';
 import { verifyWebhookSecret } from '../middleware/verifyWebhookSecret';
-import { parseIncomingMessages, isBotMessage } from '../services/whatsapp.service';
+import { parseIncomingMessages, isBotMessage, alertOperationalGroup } from '../services/whatsapp.service';
 import { env } from '../config/env';
 
 export const whatsappRouter = Router();
@@ -46,6 +46,10 @@ whatsappRouter.post('/webhook/whatsapp/:secret', verifyWebhookSecret, (req, res)
 
     handleIncomingMessage(message).catch((err) => {
       logger.error({ err, from: message.from }, 'Erro ao processar mensagem do agente');
+      const motivo = err instanceof Error ? err.message : String(err);
+      alertOperationalGroup(
+        `⚠️ Kadu não conseguiu responder um lead (${message.from}). Verificar o servidor.\nErro: ${motivo}`,
+      );
     });
   }
 });

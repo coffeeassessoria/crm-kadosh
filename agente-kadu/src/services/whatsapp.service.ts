@@ -55,6 +55,24 @@ export async function sendTextMessage(to: string, text: string) {
   return result;
 }
 
+/**
+ * Alerta o grupo operacional quando o agente Kadu falha ao responder um lead
+ * (ex: API do Gemini fora do ar/sem créditos). Cooldown evita floodar o grupo
+ * quando várias mensagens falham em sequência durante uma queda prolongada.
+ */
+let lastErrorAlertAt = 0;
+const ERROR_ALERT_COOLDOWN_MS = 10 * 60 * 1000;
+
+export async function alertOperationalGroup(text: string): Promise<void> {
+  const now = Date.now();
+  if (now - lastErrorAlertAt < ERROR_ALERT_COOLDOWN_MS) return;
+  lastErrorAlertAt = now;
+
+  await sendTextMessage(env.WHATSAPP_GRUPO_OPERACIONAL_ID, text).catch((err) =>
+    logger.error({ err }, 'Falha ao enviar alerta pro grupo operacional'),
+  );
+}
+
 /** Envia uma imagem a partir de URL pública para um contato. Legenda é opcional. */
 export async function sendImageMessage(to: string, imageUrl: string, caption?: string) {
   const result = await callEvolutionApi(`/message/sendMedia/${INSTANCE}`, {
