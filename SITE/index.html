@@ -98,9 +98,13 @@ section{padding:100px 5%}
 .step p{font-size:15px;color:var(--gray-light);line-height:1.6}
 
 /* SERVIÇOS */
-#servicos{background:var(--black)}
-.servicos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:60px}
-.servico-card{background:var(--dark);padding:40px 32px;border-top:3px solid transparent;transition:border-color .2s,background .2s}
+#servicos{background:var(--black);overflow:hidden}
+.servicos-viewport{overflow:hidden;margin-top:60px;-webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent)}
+.servicos-track{display:flex;gap:2px;width:max-content;animation:serv-scroll 38s linear infinite}
+.servicos-viewport:hover .servicos-track{animation-play-state:paused}
+@keyframes serv-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.servicos-track{animation:none}}
+.servico-card{flex:0 0 320px;background:var(--dark);padding:40px 32px;border-top:3px solid transparent;transition:border-color .2s,background .2s}
 .servico-card:hover{border-color:var(--orange);background:var(--dark2)}
 .servico-icon{width:56px;height:56px;border-radius:12px;background:rgba(245,130,32,0.12);border:1px solid rgba(245,130,32,0.2);display:flex;align-items:center;justify-content:center;margin-bottom:20px}
 .servico-card h3{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;text-transform:uppercase;margin-bottom:12px}
@@ -261,7 +265,6 @@ footer{background:var(--dark);padding:60px 5% 36px;border-top:1px solid var(--bo
   .hero-grid,.diff-grid,.orca-wrap,.footer-top{grid-template-columns:1fr}
   .hero-visual{display:none}
   .steps{grid-template-columns:repeat(2,1fr)}
-  .servicos-grid{grid-template-columns:1fr 1fr}
   #hero{padding:100px 5% 60px;min-height:auto}
   .hero h1{font-size:clamp(40px,10vw,64px)}
   .hero-sub{font-size:16px}
@@ -275,7 +278,6 @@ footer{background:var(--dark);padding:60px 5% 36px;border-top:1px solid var(--bo
 @media(max-width:640px){
   section{padding:70px 5%}
   .steps{grid-template-columns:1fr}
-  .servicos-grid{grid-template-columns:1fr}
   nav{padding:0 4%;height:64px}
   .nav-logo-img{height:38px}
   .nav-logo-text{font-size:15px}
@@ -286,7 +288,7 @@ footer{background:var(--dark);padding:60px 5% 36px;border-top:1px solid var(--bo
   .hero-actions{flex-direction:column;width:100%}
   .hero-actions a{width:100%;justify-content:center}
   .step{padding:28px 20px}
-  .servico-card{padding:28px 20px}
+  .servico-card{padding:28px 20px;flex-basis:280px}
   .dep-card2{padding:22px 18px}
   .dep-columns{max-height:480px;gap:14px}
   .section-title{font-size:clamp(28px,8vw,42px)}
@@ -306,16 +308,19 @@ footer{background:var(--dark);padding:60px 5% 36px;border-top:1px solid var(--bo
 }
 
 /* ── GALERIA ── */
-#galeria{background:var(--dark)}
-.galeria-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:auto auto;gap:10px;margin-top:48px}
-.galeria-item{overflow:hidden;border-radius:8px;aspect-ratio:4/3;position:relative;cursor:pointer}
+#galeria{background:var(--dark);overflow:hidden}
+.galeria-viewport{overflow:hidden;margin-top:48px;-webkit-mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent);mask-image:linear-gradient(to right,transparent,#000 6%,#000 94%,transparent)}
+.galeria-track{display:flex;gap:10px;width:max-content;animation:gal-scroll 30s linear infinite}
+.galeria-viewport:hover .galeria-track{animation-play-state:paused}
+@keyframes gal-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.galeria-track{animation:none}}
+.galeria-item{flex:0 0 320px;overflow:hidden;border-radius:8px;aspect-ratio:4/3;position:relative;cursor:pointer}
 .galeria-item img{width:100%;height:100%;object-fit:cover;transition:transform .35s ease,filter .35s ease;filter:brightness(.85)}
 .galeria-item:hover img{transform:scale(1.05);filter:brightness(1)}
-.galeria-item:first-child{grid-column:span 2;aspect-ratio:16/9}
 .galeria-badge{position:absolute;top:10px;left:10px;background:var(--orange);color:#fff;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:4px}
 .galeria-cta{text-align:center;margin-top:40px}
-@media(max-width:768px){.galeria-grid{grid-template-columns:1fr 1fr}.galeria-item:first-child{grid-column:span 2}}
-@media(max-width:480px){.galeria-grid{grid-template-columns:1fr}.galeria-item:first-child{grid-column:span 1;aspect-ratio:4/3}}
+@media(max-width:768px){.galeria-item{flex-basis:260px}}
+@media(max-width:480px){.galeria-item{flex-basis:220px}.servico-card{flex-basis:260px}}
 
 /* ── LIGHTBOX ── */
 .lb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;align-items:center;justify-content:center}
@@ -450,13 +455,21 @@ footer{background:var(--dark);padding:60px 5% 36px;border-top:1px solid var(--bo
     <p class="section-tag">Nossos Serviços</p>
     <h2 class="section-title">Para Qualquer Tipo<br>de Obra ou Reforma</h2>
     <p class="section-sub">Seja uma reforma residencial ou uma obra comercial, a Kadosh tem a solução certa.</p>
-    <div class="servicos-grid">
+    <div class="servicos-viewport">
+      <div class="servicos-track">
       <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-home"/></svg></div><h3>Reformas Residenciais</h3><p>Quebrou uma parede? Reformou o banheiro? A mini caçamba cabe no seu quintal e resolve o entulho.</p><span class="servico-tag">Pequeno e médio porte</span></div>
       <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-build"/></svg></div><h3>Construções e Obras</h3><p>Para obras maiores com volume constante de entulho. Planos de coleta periódica para seu canteiro limpo.</p><span class="servico-tag">Grande volume</span></div>
       <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-trash"/></svg></div><h3>Limpeza e Demolição</h3><p>Demoliu um cômodo? Descarte móveis velhos, madeiras, gesso e resíduos volumosos sem complicação.</p><span class="servico-tag">Entulho variado</span></div>
       <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-store"/></svg></div><h3>Obras Comerciais</h3><p>Reformou sua loja ou escritório? Atendemos empresas e condomínios com agilidade e regularidade.</p><span class="servico-tag">Empresas e comércios</span></div>
       <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-leaf"/></svg></div><h3>Jardinagem e Paisagismo</h3><p>Poda de árvores, limpeza de terreno e resíduos orgânicos de grande volume. Resolvemos com agilidade.</p><span class="servico-tag">Resíduos orgânicos</span></div>
       <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-bolt"/></svg></div><h3>Serviço de Urgência</h3><p>Precisa de uma caçamba para ontem? Temos disponibilidade para atendimentos emergenciais em Sinop.</p><span class="servico-tag">Atendimento rápido</span></div>
+      <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-home"/></svg></div><h3>Reformas Residenciais</h3><p>Quebrou uma parede? Reformou o banheiro? A mini caçamba cabe no seu quintal e resolve o entulho.</p><span class="servico-tag">Pequeno e médio porte</span></div>
+      <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-build"/></svg></div><h3>Construções e Obras</h3><p>Para obras maiores com volume constante de entulho. Planos de coleta periódica para seu canteiro limpo.</p><span class="servico-tag">Grande volume</span></div>
+      <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-trash"/></svg></div><h3>Limpeza e Demolição</h3><p>Demoliu um cômodo? Descarte móveis velhos, madeiras, gesso e resíduos volumosos sem complicação.</p><span class="servico-tag">Entulho variado</span></div>
+      <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-store"/></svg></div><h3>Obras Comerciais</h3><p>Reformou sua loja ou escritório? Atendemos empresas e condomínios com agilidade e regularidade.</p><span class="servico-tag">Empresas e comércios</span></div>
+      <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-leaf"/></svg></div><h3>Jardinagem e Paisagismo</h3><p>Poda de árvores, limpeza de terreno e resíduos orgânicos de grande volume. Resolvemos com agilidade.</p><span class="servico-tag">Resíduos orgânicos</span></div>
+      <div class="servico-card"><div class="servico-icon"><svg width="28" height="28" stroke="#F58220"><use href="#ic-bolt"/></svg></div><h3>Serviço de Urgência</h3><p>Precisa de uma caçamba para ontem? Temos disponibilidade para atendimentos emergenciais em Sinop.</p><span class="servico-tag">Atendimento rápido</span></div>
+      </div>
     </div>
   </div>
 </section>
@@ -503,7 +516,8 @@ footer{background:var(--dark);padding:60px 5% 36px;border-top:1px solid var(--bo
     <p class="section-tag">Nossas Caçambas</p>
     <h2 class="section-title">Veja de Perto<br>Antes de <span style="color:var(--orange)">Agendar</span></h2>
     <p class="section-sub">Caçambas laranjinhas, identificadas, entregas feitas todos os dias em Sinop-MT.</p>
-    <div class="galeria-grid">
+    <div class="galeria-viewport">
+      <div class="galeria-track">
       <div class="galeria-item" onclick="abrirLb(this)">
         <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto3.jpg.jpeg" alt="Mini caçamba Kadosh com logo" loading="lazy">
         <span class="galeria-badge">Kadosh Mini Caçambas</span>
@@ -519,6 +533,23 @@ footer{background:var(--dark);padding:60px 5% 36px;border-top:1px solid var(--bo
       </div>
       <div class="galeria-item" onclick="abrirLb(this)">
         <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto2.jpg.jpeg" alt="Caçamba em uso na obra" loading="lazy">
+      </div>
+      <div class="galeria-item" onclick="abrirLb(this)">
+        <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto3.jpg.jpeg" alt="Mini caçamba Kadosh com logo" loading="lazy">
+        <span class="galeria-badge">Kadosh Mini Caçambas</span>
+      </div>
+      <div class="galeria-item" onclick="abrirLb(this)">
+        <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto4.jpg.jpeg" alt="Caçamba entregue em residência" loading="lazy">
+      </div>
+      <div class="galeria-item" onclick="abrirLb(this)">
+        <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto5.jpg.jpeg" alt="Caçamba em calçada residencial" loading="lazy">
+      </div>
+      <div class="galeria-item" onclick="abrirLb(this)">
+        <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto1.jpg.jpeg" alt="Mini caçamba Kadosh número 04" loading="lazy">
+      </div>
+      <div class="galeria-item" onclick="abrirLb(this)">
+        <img src="https://buwdfgjjecmkhbyzygvf.supabase.co/storage/v1/object/public/assets/social-proof/foto2.jpg.jpeg" alt="Caçamba em uso na obra" loading="lazy">
+      </div>
       </div>
     </div>
     <div class="galeria-cta">
@@ -794,7 +825,7 @@ function kdshCapturarLead(nome,tipo,volume,end,obs){
 }
 function enviarWhatsApp(){const nome=document.getElementById('f-nome').value.trim();const tipo=document.getElementById('f-tipo').value;const volume=document.getElementById('f-volume').value;const end=document.getElementById('f-end').value.trim();const obs=document.getElementById('f-obs').value.trim();if(!nome){alert('Por favor, informe seu nome.');return}if(!tipo){alert('Selecione o tipo de serviço.');return}kdshCapturarLead(nome,tipo,volume,end,obs);let msg='Olá! Gostaria de solicitar um orçamento de mini caçamba.\n\n';msg+='👤 *Nome:* '+nome+'\n';msg+='🏗️ *Tipo de serviço:* '+tipo+'\n';if(volume)msg+='📦 *Volume estimado:* '+volume+'\n';if(end)msg+='📍 *Endereço:* '+end+'\n';if(obs)msg+='📝 *Observações:* '+obs+'\n';msg+='\nAguardo retorno. Obrigado!';window.open('https://wa.me/5566996585048?text='+encodeURIComponent(msg),'_blank');}
 const obs=new IntersectionObserver((entries)=>{entries.forEach(entry=>{if(entry.isIntersecting){entry.target.style.opacity='1';entry.target.style.transform='translateY(0)';}});},{threshold:0.1});
-document.querySelectorAll('.step,.servico-card,.diff-item').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity 0.5s ease,transform 0.5s ease';obs.observe(el);});
+document.querySelectorAll('.step,.diff-item').forEach(el=>{el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity 0.5s ease,transform 0.5s ease';obs.observe(el);});
 </script>
 
 <script>
