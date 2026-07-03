@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { inspect } from 'node:util';
 import { logger } from '../lib/logger';
 import { handleIncomingMessage, handleHumanTakeover } from '../agent';
 import { handleAdminGroupMessage } from '../agent/adminAgent';
@@ -8,6 +9,22 @@ import { parseIncomingMessages, isBotMessage, alertOperationalGroup } from '../s
 import { env } from '../config/env';
 
 export const whatsappRouter = Router();
+
+/**
+ * Extrai uma mensagem legível de qualquer erro — inclusive os que não são instâncias de
+ * `Error` (ex: alguns erros de SDK/rede chegam como objeto puro), evitando o alerta genérico
+ * "[object Object]" no grupo operacional.
+ */
+function descreverErro(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  if (err == null) return String(err);
+  try {
+    return JSON.stringify(err) || inspect(err, { depth: 3 });
+  } catch {
+    return inspect(err, { depth: 3 });
+  }
+}
 
 /** RF01.1 — recebe eventos da Evolution API e aciona o agente Kadu para novas mensagens. */
 whatsappRouter.post('/webhook/whatsapp/:secret', verifyWebhookSecret, (req, res) => {
@@ -46,9 +63,8 @@ whatsappRouter.post('/webhook/whatsapp/:secret', verifyWebhookSecret, (req, res)
 
     handleIncomingMessage(message).catch((err) => {
       logger.error({ err, from: message.from }, 'Erro ao processar mensagem do agente');
-      const motivo = err instanceof Error ? err.message : String(err);
       alertOperationalGroup(
-        `⚠️ Kadu não conseguiu responder um lead (${message.from}). Verificar o servidor.\nErro: ${motivo}`,
+        `⚠️ Kadu não conseguiu responder um lead (${message.from}). Verificar o servidor.\nErro: ${descreverErro(err)}`,
       );
     });
   }

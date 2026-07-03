@@ -1,6 +1,55 @@
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
-import type { Agendamento, AgendaItem, Lead, PixSolicitacao } from '../types';
+import { env } from '../config/env';
+import type { Agendamento, AgendaItem, Lead, PixSolicitacao, PropostaAgendamento } from '../types';
+
+/** Soma `dias` a uma data ISO (YYYY-MM-DD) e retorna também no formato ISO. */
+export function addDias(dataISO: string, dias: number): string {
+  const data = new Date(`${dataISO}T00:00:00`);
+  data.setDate(data.getDate() + dias);
+  return data.toISOString().slice(0, 10);
+}
+
+const DIAS_SEMANA: Record<string, number> = {
+  domingo: 0,
+  segunda: 1,
+  terca: 2,
+  quarta: 3,
+  quinta: 4,
+  sexta: 5,
+  sabado: 6,
+};
+
+/** Dias da semana (0-6, Date.getDay()) com diária promocional, conforme PROMO_DIAS_SEMANA. */
+function promoDiasSemanaNumeros(): number[] {
+  return env.PROMO_DIAS_SEMANA.split(',')
+    .map((d) => DIAS_SEMANA[d.trim().toLowerCase()])
+    .filter((n) => n !== undefined);
+}
+
+/** Data de hoje (YYYY-MM-DD) no fuso horário da empresa, não do servidor. */
+export function hojeISO(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: env.TIMEZONE });
+}
+
+const NOMES_DIA_SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+
+/** Nome do dia da semana (em português) de uma data ISO (YYYY-MM-DD) — calculado em código, nunca "de cabeça" pelo modelo. */
+export function nomeDiaSemana(dataISO: string): string {
+  return NOMES_DIA_SEMANA[new Date(`${dataISO}T00:00:00`).getDay()];
+}
+
+/**
+ * Preço da diária (1º dia, já incluso entrega + retirada) para uma data de ENTREGA.
+ * Confirmado com o proprietário: a promoção vale se a ENTREGA cair num dos PROMO_DIAS_SEMANA
+ * (ex: terça/quarta), não importa em que dia o pedido foi fechado. A diária adicional (dias
+ * extras de permanência) NÃO entra nessa promoção.
+ */
+export function precoDiariaParaData(dataEntregaISO: string): { preco: number; promocao_aplicada: boolean } {
+  const diaSemana = new Date(`${dataEntregaISO}T00:00:00`).getDay();
+  const promocao_aplicada = promoDiasSemanaNumeros().includes(diaSemana);
+  return { preco: promocao_aplicada ? env.PRECO_LOCACAO_PROMOCIONAL : env.PRECO_LOCACAO, promocao_aplicada };
+}
 
 /** RF01.2 / RF01.3 — recupera o lead pelo telefone ou cria um novo com origem WhatsApp. */
 export async function findOrCreateLeadByPhone(telefone: string, nome?: string): Promise<Lead> {
@@ -144,22 +193,48 @@ export async function createEventoAgendamento(input: {
 }
 
 /**
- * RF03.4 — verifica se já existe agendamento para a data informada.
- * Limite simples e configurável: até 6 entregas por dia.
+ * RF03.4 — verifica se há caçambas livres o suficiente pro período pedido.
+ * Uma caçamba entregue em `data_entrega` e retirada em `data_retirada` ocupa a frota
+ * em todo o intervalo [data_entrega, data_retirada). Soma a quantidade de todos os
+ * agendamentos não cancelados cujo período sobrepõe a data pedida e compara contra
+ * o tamanho total da frota (FROTA_TOTAL_CACAMBAS).
+ * O preco_diaria retornado depende da data de ENTREGA (dataEntrega), conforme a promoção.
  */
-const MAX_ENTREGAS_POR_DIA = 6;
+export async function checkAvailability(
+  dataEntrega: string,
+  quantidadeSolicitada: number,
+  diasPermanencia = 1,
+): Promise<{
+  disponivel: boolean;
+  cacambas_disponiveis: number;
+  cacambas_ocupadas: number;
+  frota_total: number;
+  preco_diaria: number;
+  promocao_aplicada: boolean;
+}> {
+  const dataRetirada = addDias(dataEntrega, diasPermanencia);
 
-export async function checkAvailability(data: string): Promise<{ disponivel: boolean; total_agendamentos: number }> {
   const { data: rows, error } = await supabase
     .from('agendamentos')
-    .select('id')
-    .eq('data_entrega', data)
-    .neq('status', 'cancelado');
+    .select('quantidade_cacambas')
+    .neq('status', 'cancelado')
+    .lt('data_entrega', dataRetirada)
+    .gt('data_retirada', dataEntrega);
 
   if (error) throw error;
 
-  const total = rows?.length ?? 0;
-  return { disponivel: total < MAX_ENTREGAS_POR_DIA, total_agendamentos: total };
+  const ocupadas = (rows ?? []).reduce((soma, r) => soma + Number(r.quantidade_cacambas), 0);
+  const disponiveis = Math.max(0, env.FROTA_TOTAL_CACAMBAS - ocupadas);
+  const { preco, promocao_aplicada } = precoDiariaParaData(dataEntrega);
+
+  return {
+    disponivel: disponiveis >= quantidadeSolicitada,
+    cacambas_disponiveis: disponiveis,
+    cacambas_ocupadas: ocupadas,
+    frota_total: env.FROTA_TOTAL_CACAMBAS,
+    preco_diaria: preco,
+    promocao_aplicada,
+  };
 }
 
 type NovoAgendamento = Omit<Agendamento, 'id' | 'created_at' | 'updated_at' | 'google_event_id' | 'numero_pedido'> & {
@@ -399,4 +474,115 @@ export async function getFunilLeads(): Promise<FunilLeadsItem[]> {
   }
 
   return Array.from(contagem.entries()).map(([status, total]) => ({ status, total }));
+}
+
+/** Status de lead considerados "já resolvidos" — não entram na reconciliação diária. */
+const STATUS_LEAD_RESOLVIDOS = ['agendado', 'convertido', 'perdido'];
+
+/**
+ * Leads com conversa em `dataISO` que ainda não têm agendamento real no CRM nem proposta
+ * pendente de reconciliação — candidatos a serem revisados pela análise de conversa via IA.
+ */
+export async function leadsParaRevisarFechamento(dataISO: string): Promise<Lead[]> {
+  const { data: msgs, error: errMsgs } = await supabase
+    .from('mensagens')
+    .select('lead_id')
+    .gte('created_at', `${dataISO}T00:00:00`)
+    .lte('created_at', `${dataISO}T23:59:59`);
+  if (errMsgs) throw errMsgs;
+
+  const leadIds = [...new Set((msgs ?? []).map((m) => m.lead_id as string))];
+  if (leadIds.length === 0) return [];
+
+  const { data: leads, error: errLeads } = await supabase
+    .from('leads')
+    .select('*')
+    .in('id', leadIds)
+    .not('status', 'in', `(${STATUS_LEAD_RESOLVIDOS.join(',')})`);
+  if (errLeads) throw errLeads;
+  if (!leads || leads.length === 0) return [];
+
+  const idsRestantes = leads.map((l) => l.id as string);
+
+  const { data: agendamentosExistentes, error: errAg } = await supabase
+    .from('agendamentos')
+    .select('lead_id')
+    .in('lead_id', idsRestantes)
+    .neq('status', 'cancelado');
+  if (errAg) throw errAg;
+  const leadsComAgendamento = new Set((agendamentosExistentes ?? []).map((a) => a.lead_id as string));
+
+  const { data: propostasExistentes, error: errProp } = await supabase
+    .from('propostas_agendamento')
+    .select('lead_id')
+    .in('lead_id', idsRestantes)
+    .eq('status', 'pendente');
+  if (errProp) throw errProp;
+  const leadsComProposta = new Set((propostasExistentes ?? []).map((p) => p.lead_id as string));
+
+  return (leads as Lead[]).filter((l) => !leadsComAgendamento.has(l.id) && !leadsComProposta.has(l.id));
+}
+
+/** Cria uma proposta de agendamento (pendente de confirmação humana) a partir da análise de uma conversa. */
+export async function criarPropostaAgendamento(input: {
+  leadId: string;
+  nomeCliente: string;
+  telefone: string;
+  enderecoCompleto: string;
+  bairro: string | null;
+  tipoResiduo: string | null;
+  quantidadeCacambas: number;
+  dataEntrega: string;
+  horarioEntrega: string | null;
+  diasPermanencia: number;
+  valorTotal: number;
+  justificativa: string;
+}): Promise<PropostaAgendamento> {
+  const { data, error } = await supabase
+    .from('propostas_agendamento')
+    .insert({
+      lead_id: input.leadId,
+      nome_cliente: input.nomeCliente,
+      telefone: input.telefone,
+      endereco_completo: input.enderecoCompleto,
+      bairro: input.bairro,
+      tipo_residuo: input.tipoResiduo,
+      quantidade_cacambas: input.quantidadeCacambas,
+      data_entrega: input.dataEntrega,
+      horario_entrega: input.horarioEntrega,
+      dias_permanencia: input.diasPermanencia,
+      valor_total: input.valorTotal,
+      justificativa: input.justificativa,
+      status: 'pendente',
+    })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data as PropostaAgendamento;
+}
+
+/** Propostas de agendamento aguardando confirmação humana. */
+export async function listarPropostasPendentes(): Promise<PropostaAgendamento[]> {
+  const { data, error } = await supabase
+    .from('propostas_agendamento')
+    .select('*')
+    .eq('status', 'pendente')
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as PropostaAgendamento[];
+}
+
+/** Marca uma proposta como confirmada ou descartada (não apaga — mantém histórico). */
+export async function resolverProposta(
+  id: string,
+  status: 'confirmado' | 'descartado',
+): Promise<PropostaAgendamento> {
+  const { data, error } = await supabase
+    .from('propostas_agendamento')
+    .update({ status, resolved_at: new Date().toISOString() })
+    .eq('id', id)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return data as PropostaAgendamento;
 }

@@ -4,6 +4,7 @@ import { logger } from './lib/logger';
 import { healthRouter } from './routes/health.routes';
 import { whatsappRouter } from './routes/whatsapp.routes';
 import { startBriefingScheduler } from './queue/briefingScheduler';
+import { startReconciliacaoScheduler } from './queue/reconciliacaoScheduler';
 
 const app = express();
 
@@ -15,4 +16,5 @@ app.use(whatsappRouter);
 app.listen(env.PORT, () => {
   logger.info(`Agente Kadu rodando na porta ${env.PORT}`);
   startBriefingScheduler();
+  startReconciliacaoScheduler();
 });

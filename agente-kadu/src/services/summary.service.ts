@@ -37,6 +37,9 @@ export async function generateAndSaveConversationSummary(leadId: string): Promis
     config: {
       systemInstruction: SYSTEM_PROMPT,
       maxOutputTokens: 300,
+      // Resumo simples, não precisa de "thinking" — sem isso o modelo gasta boa parte do
+      // limite de tokens só pensando e o resumo sai cortado (ou vazio).
+      thinkingConfig: { thinkingBudget: 0 },
     },
   });
 

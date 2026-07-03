@@ -120,6 +120,52 @@ export const adminTools: FunctionDeclaration[] = [
     },
   },
   {
+    name: 'listar_agendamentos_propostos',
+    description:
+      'Lista as propostas de agendamento pendentes geradas pela reconciliação diária — conversas ' +
+      'que parecem ter fechado negócio mas ainda não viraram agendamento no CRM. Use quando ' +
+      'perguntarem algo como "quais propostas estão pendentes?" ou "o que falta confirmar?".',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {},
+    },
+  },
+  {
+    name: 'confirmar_agendamento_proposto',
+    description:
+      'Confirma uma ou mais propostas de agendamento pendentes (geradas pela reconciliação diária) ' +
+      'e cria o agendamento de verdade no CRM e no Google Agenda, com os dados exatamente como ' +
+      'extraídos da conversa. Informe o nome/telefone do cliente, ou "todos" para confirmar todas ' +
+      'as propostas pendentes de uma vez.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        alvo: {
+          type: Type.STRING,
+          description: 'Nome (parcial) ou telefone do cliente na proposta, ou "todos"',
+        },
+      },
+      required: ['alvo'],
+    },
+  },
+  {
+    name: 'descartar_agendamento_proposto',
+    description:
+      'Descarta uma ou mais propostas de agendamento pendentes sem criar nada no CRM — use quando ' +
+      'a proposta identificada pela reconciliação estiver errada ou não corresponder a um ' +
+      'fechamento de verdade. Informe o nome/telefone do cliente, ou "todos" para descartar todas.',
+    parameters: {
+      type: Type.OBJECT,
+      properties: {
+        alvo: {
+          type: Type.STRING,
+          description: 'Nome (parcial) ou telefone do cliente na proposta, ou "todos"',
+        },
+      },
+      required: ['alvo'],
+    },
+  },
+  {
     name: 'liberar_kadu',
     description:
       'Libera um lead de volta para o atendimento automático do Kadu, zerando o bloqueio de ' +

@@ -118,3 +118,29 @@ export interface AgendaItem {
   data_retirada?: string;
   leads: { nome: string } | { nome: string }[] | null;
 }
+
+export type StatusPropostaAgendamento = 'pendente' | 'confirmado' | 'descartado';
+
+/**
+ * Linha da tabela `propostas_agendamento` — geradas pela reconciliação diária
+ * (análise das conversas do dia via IA), aguardando confirmação humana antes de
+ * virarem um agendamento de verdade. Ver src/services/reconciliacao.service.ts.
+ */
+export interface PropostaAgendamento {
+  id: string;
+  lead_id: string;
+  nome_cliente: string;
+  telefone: string;
+  endereco_completo: string;
+  bairro: string | null;
+  tipo_residuo: string | null;
+  quantidade_cacambas: number;
+  data_entrega: string;
+  horario_entrega: string | null;
+  dias_permanencia: number;
+  valor_total: number;
+  justificativa: string;
+  status: StatusPropostaAgendamento;
+  created_at: string;
+  resolved_at: string | null;
+}

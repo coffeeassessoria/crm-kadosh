@@ -1,19 +1,13 @@
 import { env } from '../config/env';
 import { logger } from '../lib/logger';
 import * as crm from '../services/crm.service';
-import * as calendar from '../services/calendar.service';
-import * as maps from '../services/maps.service';
 import * as whatsapp from '../services/whatsapp.service';
+import { criarAgendamentoCompleto } from '../services/agendamento.service';
 import type { Lead } from '../types';
 
-function calcularValorLocacao(quantidade: number, diasPermanencia: number): number {
-  return quantidade * env.PRECO_LOCACAO + quantidade * Math.max(0, diasPermanencia - 1) * env.DIARIA_ADICIONAL;
-}
-
-function addDias(dataISO: string, dias: number): string {
-  const data = new Date(`${dataISO}T00:00:00`);
-  data.setDate(data.getDate() + dias);
-  return data.toISOString().slice(0, 10);
+function calcularValorLocacao(quantidade: number, diasPermanencia: number, dataEntrega: string): number {
+  const { preco } = crm.precoDiariaParaData(dataEntrega);
+  return quantidade * preco + quantidade * Math.max(0, diasPermanencia - 1) * env.DIARIA_ADICIONAL;
 }
 
 /** Executa uma tool chamada pelo agente e retorna o resultado (serializado para o Claude). */
@@ -34,92 +28,35 @@ export async function runTool(name: string, input: Record<string, unknown>, lead
     }
 
     case 'check_availability': {
-      return crm.checkAvailability(String(input.data));
+      const quantidade = Number(input.quantidade_cacambas);
+      const diasPermanencia = Math.max(1, Number(input.dias_permanencia ?? 1));
+      return crm.checkAvailability(String(input.data), quantidade, diasPermanencia);
     }
 
     case 'create_appointment': {
       const dataEntrega = String(input.data_entrega);
       const diasPermanencia = Math.max(1, Number(input.dias_permanencia ?? 1));
-      const dataRetirada = addDias(dataEntrega, diasPermanencia);
-      const horarioEntrega = (input.horario_entrega as string | undefined) ?? null;
       const quantidade = Number(input.quantidade_cacambas);
-      const valorTotal = calcularValorLocacao(quantidade, diasPermanencia);
-      const nomeCliente = String(input.nome_cliente);
-      const enderecoCompleto = String(input.endereco_completo);
-      const bairro = String(input.bairro);
-      const tipoResiduo = String(input.tipo_residuo);
-      const telefone = String(input.telefone ?? lead.telefone ?? '');
+      const valorTotal = calcularValorLocacao(quantidade, diasPermanencia, dataEntrega);
 
-      await crm.updateLead(lead.id, {
-        nome: nomeCliente,
-        tipo_residuo: tipoResiduo,
-        bairro,
-        endereco: enderecoCompleto,
-        quantidade_cacambas: quantidade,
-        valor: valorTotal,
-        status: 'agendado',
-        data_agendamento: dataEntrega,
-      });
-
-      const agendamento = await crm.createAgendamento({
-        lead_id: lead.id,
-        endereco_completo: enderecoCompleto,
-        bairro,
-        tipo_residuo: tipoResiduo,
-        quantidade_cacambas: quantidade,
-        data_entrega: dataEntrega,
-        horario_entrega: horarioEntrega,
-        data_retirada: dataRetirada,
-        dias_permanencia: diasPermanencia,
-        valor_total: valorTotal,
-        status: 'confirmado',
-      });
-
-      // Cria evento no calendário do CRM (tabela `eventos`) para aparecer na view de Agendamentos
-      await crm.createEventoAgendamento({
+      const { agendamento, dataRetirada, googleEventId, rota } = await criarAgendamentoCompleto({
         leadId: lead.id,
-        titulo: `🚛 Entrega - ${nomeCliente} (${quantidade}x)`,
-        descricao: [
-          `Endereço: ${enderecoCompleto}`,
-          `Resíduo: ${tipoResiduo}`,
-          `Quantidade: ${quantidade} caçamba(s)`,
-          `Valor total: R$ ${valorTotal.toFixed(2)}`,
-          `Retirada prevista: ${dataRetirada}`,
-          `Telefone: ${telefone}`,
-        ].join('\n'),
-        dataEvento: dataEntrega,
-        horaInicio: horarioEntrega,
+        nomeCliente: String(input.nome_cliente),
+        telefone: String(input.telefone ?? lead.telefone ?? ''),
+        enderecoCompleto: String(input.endereco_completo),
+        bairro: String(input.bairro),
+        tipoResiduo: String(input.tipo_residuo),
+        quantidadeCacambas: quantidade,
+        dataEntrega,
+        horarioEntrega: (input.horario_entrega as string | undefined) ?? null,
+        diasPermanencia,
+        valorTotal,
       });
-
-      const googleEventId = await calendar.createDeliveryEvent({
-        title: `Entrega - ${nomeCliente}`,
-        description: [
-          `Cliente: ${nomeCliente}`,
-          `Telefone: ${telefone}`,
-          `Resíduo: ${tipoResiduo}`,
-          `Quantidade: ${quantidade} caçamba(s)`,
-          `Valor total: R$ ${valorTotal.toFixed(2)}`,
-          `Retirada prevista: ${dataRetirada}`,
-        ].join('\n'),
-        location: enderecoCompleto,
-        date: dataEntrega,
-        time: horarioEntrega,
-      });
-
-      if (googleEventId) {
-        await crm.updateAgendamento(agendamento.id, { google_event_id: googleEventId });
-      }
-
-      await crm.addHistorico(
-        lead.id,
-        'agendamento',
-        `Agendamento #${agendamento.id.slice(0, 8)} criado para ${dataEntrega} (${quantidade}x, R$ ${valorTotal.toFixed(2)}).`,
-      );
 
       return {
         agendamento_id: agendamento.id,
         data_retirada: dataRetirada,
-        rota: maps.buildDirectionsLink(enderecoCompleto),
+        rota,
         google_calendar: googleEventId ? 'criado' : 'nao_configurado',
       };
     }

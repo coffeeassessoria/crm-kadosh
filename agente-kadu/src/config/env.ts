@@ -33,11 +33,21 @@ const envSchema = z.object({
   GOOGLE_CALENDAR_ID: z.string().default('primary'),
 
   // Regras de negócio (RNF03.3)
+  // Tamanho total da frota de mini caçambas — usado para checar estoque real por período.
+  FROTA_TOTAL_CACAMBAS: z.coerce.number().positive().default(10),
   PRECO_LOCACAO: z.coerce.number().positive().default(249),
+  // Diária promocional aplicada quando a data de ENTREGA cai em um dos PROMO_DIAS_SEMANA.
+  PRECO_LOCACAO_PROMOCIONAL: z.coerce.number().positive().default(199),
+  // Dias da semana (abreviação em português, separados por vírgula) com diária promocional.
+  PROMO_DIAS_SEMANA: z.string().default('terca,quarta'),
   // Valor cobrado por dia extra de permanência da caçamba (além do 1º dia, já incluso na diária).
+  // Não muda com a promoção — vale o mesmo valor em qualquer dia da semana.
   DIARIA_ADICIONAL: z.coerce.number().nonnegative().default(15),
   CHAVE_PIX: z.string().default(''),
   HORARIO_BRIEFING_CRON: z.string().default('30 6 * * *'),
+  // Horário da reconciliação diária (revisão das conversas do dia em busca de fechamentos
+  // não registrados como agendamento) — padrão 21h, depois do horário comercial.
+  HORARIO_RECONCILIACAO_CRON: z.string().default('0 21 * * *'),
   TIMEZONE: z.string().default('America/Cuiaba'),
   HORARIO_COMERCIAL_INICIO: z.string().default('07:00'),
   HORARIO_COMERCIAL_FIM: z.string().default('18:00'),

@@ -25,15 +25,26 @@ export const agentTools: FunctionDeclaration[] = [
   {
     name: 'check_availability',
     description:
-      'Verifica a disponibilidade de agenda para uma data de entrega, evitando conflitos (RF03.4). ' +
-      'Chame antes de propor uma data ao cliente.',
+      'Verifica se há caçambas livres o suficiente para a data e quantidade pedidas, considerando ' +
+      'a frota total e os dias de permanência das caçambas já alugadas nesse período (RF03.4). ' +
+      'Também retorna preco_diaria e promocao_aplicada, referentes à data de ENTREGA informada ' +
+      '(a promoção de terça/quarta depende de quando a caçamba será entregue, não de quando o ' +
+      'pedido está sendo fechado) — use SEMPRE esse preco_diaria no cálculo do valor_total, ' +
+      'nunca um valor fixo do prompt. ' +
+      'Chame antes de propor uma data ao cliente, já com a quantidade e os dias de permanência coletados.',
     parameters: {
       type: Type.OBJECT,
       properties: {
-        data: { type: Type.STRING, description: 'Data desejada no formato YYYY-MM-DD' },
+        data: { type: Type.STRING, description: 'Data de entrega desejada no formato YYYY-MM-DD' },
+        quantidade_cacambas: { type: Type.INTEGER, minimum: 1, description: 'Quantas caçambas o cliente quer' },
+        dias_permanencia: {
+          type: Type.INTEGER,
+          minimum: 1,
+          description: 'Quantos dias a caçamba ficará no local (padrão 1)',
+        },
         horario: { type: Type.STRING, description: 'Horário aproximado (HH:MM), opcional' },
       },
-      required: ['data'],
+      required: ['data', 'quantidade_cacambas'],
     },
   },
   {

@@ -5,16 +5,6 @@ import * as whatsapp from './whatsapp.service';
 import * as maps from './maps.service';
 import type { AgendaItem } from '../types';
 
-const DIAS_SEMANA = [
-  'domingo',
-  'segunda-feira',
-  'terça-feira',
-  'quarta-feira',
-  'quinta-feira',
-  'sexta-feira',
-  'sábado',
-];
-
 function nomeCliente(item: AgendaItem): string {
   const leadInfo = Array.isArray(item.leads) ? item.leads[0] : item.leads;
   return leadInfo?.nome ?? 'Cliente';
@@ -40,8 +30,8 @@ function formatarRetirada(item: AgendaItem, ordem: number): string {
 /** RF05 — monta e envia o briefing operacional diário para o grupo do WhatsApp. */
 export async function sendDailyBriefing(): Promise<void> {
   const agora = new Date();
-  const dataISO = agora.toLocaleDateString('en-CA', { timeZone: env.TIMEZONE }); // YYYY-MM-DD
-  const diaSemana = DIAS_SEMANA[agora.getDay()];
+  const dataISO = crm.hojeISO(); // YYYY-MM-DD, no fuso da empresa
+  const diaSemana = crm.nomeDiaSemana(dataISO);
   const dataCompleta = agora.toLocaleDateString('pt-BR', {
     timeZone: env.TIMEZONE,
     day: '2-digit',

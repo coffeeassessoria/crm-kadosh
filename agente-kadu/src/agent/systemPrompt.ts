@@ -24,6 +24,7 @@ export function buildSystemPrompt(lead: Lead | null): string {
 
   return template
     .replace(/{{PRECO_LOCACAO}}/g, String(env.PRECO_LOCACAO))
+    .replace(/{{PRECO_LOCACAO_PROMOCIONAL}}/g, String(env.PRECO_LOCACAO_PROMOCIONAL))
     .replace(/{{DIARIA_ADICIONAL}}/g, String(env.DIARIA_ADICIONAL))
     .replace(/{{HORARIO_COMERCIAL_INICIO}}/g, env.HORARIO_COMERCIAL_INICIO)
     .replace(/{{HORARIO_COMERCIAL_FIM}}/g, env.HORARIO_COMERCIAL_FIM)
