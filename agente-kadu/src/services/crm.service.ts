@@ -211,6 +211,7 @@ export async function checkAvailability(
   frota_total: number;
   preco_diaria: number;
   promocao_aplicada: boolean;
+  dia_semana: string;
 }> {
   const dataRetirada = addDias(dataEntrega, diasPermanencia);
 
@@ -234,6 +235,7 @@ export async function checkAvailability(
     frota_total: env.FROTA_TOTAL_CACAMBAS,
     preco_diaria: preco,
     promocao_aplicada,
+    dia_semana: nomeDiaSemana(dataEntrega),
   };
 }
 

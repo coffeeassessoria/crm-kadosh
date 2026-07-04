@@ -30,7 +30,8 @@ export const agentTools: FunctionDeclaration[] = [
       'Também retorna preco_diaria e promocao_aplicada, referentes à data de ENTREGA informada ' +
       '(a promoção de terça/quarta depende de quando a caçamba será entregue, não de quando o ' +
       'pedido está sendo fechado) — use SEMPRE esse preco_diaria no cálculo do valor_total, ' +
-      'nunca um valor fixo do prompt. ' +
+      'nunca um valor fixo do prompt. Retorna também dia_semana (já calculado) — use SEMPRE esse ' +
+      'valor ao mencionar o dia da semana de uma data pro cliente, nunca calcule de cabeça. ' +
       'Chame antes de propor uma data ao cliente, já com a quantidade e os dias de permanência coletados.',
     parameters: {
       type: Type.OBJECT,
