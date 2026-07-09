@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { logger } from '../lib/logger';
 import { env } from '../config/env';
-import type { Agendamento, AgendaItem, Lead, PixSolicitacao, PropostaAgendamento } from '../types';
+import type { AdReferral, Agendamento, AgendaItem, Lead, PixSolicitacao, PropostaAgendamento } from '../types';
 
 /** Soma `dias` a uma data ISO (YYYY-MM-DD) e retorna também no formato ISO. */
 export function addDias(dataISO: string, dias: number): string {
@@ -52,7 +52,12 @@ export function precoDiariaParaData(dataEntregaISO: string): { preco: number; pr
 }
 
 /** RF01.2 / RF01.3 — recupera o lead pelo telefone ou cria um novo com origem WhatsApp. */
-export async function findOrCreateLeadByPhone(telefone: string, nome?: string): Promise<Lead> {
+export async function findOrCreateLeadByPhone(
+  telefone: string,
+  nome?: string,
+  adReferral?: AdReferral,
+  rawFirstMessage?: unknown,
+): Promise<Lead> {
   const { data: existing, error: findError } = await supabase
     .from('leads')
     .select('*')
@@ -67,7 +72,11 @@ export async function findOrCreateLeadByPhone(telefone: string, nome?: string): 
     .insert({
       nome: nome || 'Lead WhatsApp',
       telefone,
-      origem: 'whatsapp_agente',
+      origem: adReferral ? 'anuncio_meta' : 'whatsapp_agente',
+      campanha: adReferral?.idFonte ?? adReferral?.titulo ?? null,
+      utm_medium: adReferral?.tipoFonte ?? null,
+      utm_content: adReferral?.ctwaClid ?? adReferral?.corpo ?? null,
+      primeiro_contato_raw: rawFirstMessage ?? null,
       status: 'novo',
     })
     .select('*')
@@ -166,6 +175,23 @@ export async function getConversationHistory(
       role: m.direcao === 'inbound' ? ('user' as const) : ('assistant' as const),
       content: m.conteudo,
     }));
+}
+
+/**
+ * Verifica se um lead já tem agendamento não cancelado pra uma data de entrega — usado antes
+ * de confirmar uma proposta de reconciliação, pra não duplicar um agendamento que já foi criado
+ * por outro caminho (ex: cliente fechou pelo fluxo normal antes de alguém confirmar a proposta).
+ */
+export async function leadJaTemAgendamentoNaData(leadId: string, dataEntrega: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('agendamentos')
+    .select('id')
+    .eq('lead_id', leadId)
+    .eq('data_entrega', dataEntrega)
+    .neq('status', 'cancelado')
+    .limit(1);
+  if (error) throw error;
+  return (data?.length ?? 0) > 0;
 }
 
 /**

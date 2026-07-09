@@ -9,6 +9,22 @@ export interface MessageKey {
   id: string;
 }
 
+/**
+ * Dados de origem de anúncio ("Clique para o WhatsApp" do Meta/Instagram/Facebook), presentes
+ * na primeira mensagem quando o cliente chega clicando num anúncio. Vem em
+ * contextInfo.externalAdReplyInfo no protocolo do WhatsApp (Baileys/Evolution API) — ver
+ * RASTREAMENTO_ANUNCIOS.md pra detalhes de como isso é extraído e o que fazer se os campos
+ * vierem diferentes do esperado.
+ */
+export interface AdReferral {
+  titulo: string | null;
+  corpo: string | null;
+  tipoFonte: string | null;
+  idFonte: string | null;
+  urlFonte: string | null;
+  ctwaClid: string | null;
+}
+
 /** Mensagem normalizada recebida via webhook do WhatsApp (Evolution API). */
 export interface IncomingMessage {
   messageId: string;
@@ -26,6 +42,10 @@ export interface IncomingMessage {
   isGroup: boolean;
   /** JID do grupo (ex: "1203...@g.us"), presente apenas quando isGroup === true. */
   groupJid?: string;
+  /** Presente quando a mensagem chegou via clique num anúncio "Clique para o WhatsApp". */
+  adReferral?: AdReferral;
+  /** Payload bruto da mensagem (Evolution API), guardado só na primeira mensagem de um lead novo — RNF diagnóstico de rastreamento de anúncio, ver RASTREAMENTO_ANUNCIOS.md. */
+  rawFirstMessage?: unknown;
 }
 
 export type LeadStatus =
@@ -46,6 +66,12 @@ export interface Lead {
   nome: string;
   telefone: string | null;
   origem: string;
+  /** Campanha/anúncio de origem (ex: sourceId ou título do anúncio) — ver AdReferral. */
+  campanha: string | null;
+  /** Tipo de fonte do anúncio (ex: "ad") — ver AdReferral.tipoFonte. */
+  utm_medium: string | null;
+  /** ctwaClid ou corpo do anúncio — ver AdReferral.ctwaClid/corpo. */
+  utm_content: string | null;
   status: LeadStatus;
   endereco: string | null;
   bairro: string | null;

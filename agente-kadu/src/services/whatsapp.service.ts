@@ -1,6 +1,6 @@
 import { env } from '../config/env';
 import { logger } from '../lib/logger';
-import type { IncomingMessage, MessageKey } from '../types';
+import type { AdReferral, IncomingMessage, MessageKey } from '../types';
 
 const BASE_URL = env.EVOLUTION_API_URL;
 const INSTANCE = env.EVOLUTION_INSTANCE;
@@ -129,6 +129,36 @@ function jidToPhone(key: MessageKey): string {
  * `handleHumanTakeover`); no grupo operacional, indicam a própria resposta do agente
  * administrativo e são descartadas (evita loop).
  */
+/**
+ * Extrai os dados de origem de anúncio ("Clique para o WhatsApp") de uma mensagem recebida,
+ * se presentes. No protocolo do WhatsApp (Baileys/Evolution API) isso vem em
+ * contextInfo.externalAdReplyInfo — checa os caminhos mais prováveis, já que a Evolution API
+ * pode normalizar a estrutura de forma diferente do Baileys puro.
+ *
+ * NUNCA testado contra um payload real de anúncio ainda — se o rastreamento não aparecer nos
+ * primeiros leads, comparar com `leads.primeiro_contato_raw` (guardado pra esse diagnóstico)
+ * e ajustar os caminhos abaixo.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractAdReferral(data: any): AdReferral | undefined {
+  const info =
+    data?.contextInfo?.externalAdReplyInfo ??
+    data?.message?.extendedTextMessage?.contextInfo?.externalAdReplyInfo ??
+    data?.message?.contextInfo?.externalAdReplyInfo ??
+    data?.message?.conversation?.contextInfo?.externalAdReplyInfo;
+
+  if (!info) return undefined;
+
+  return {
+    titulo: info.title ?? null,
+    corpo: info.body ?? null,
+    tipoFonte: info.sourceType ?? null,
+    idFonte: info.sourceId ?? null,
+    urlFonte: info.sourceUrl ?? null,
+    ctwaClid: info.ctwaClid ?? info.ctwa_clid ?? null,
+  };
+}
+
 export function parseIncomingMessages(body: unknown): IncomingMessage[] {
   const messages: IncomingMessage[] = [];
 
@@ -148,6 +178,8 @@ export function parseIncomingMessages(body: unknown): IncomingMessage[] {
     const isGroup = key.remoteJid.endsWith('@g.us');
     if (isGroup && key.remoteJid !== env.WHATSAPP_GRUPO_OPERACIONAL_ID) continue;
 
+    const adReferral = isGroup ? undefined : extractAdReferral(data);
+
     const base = {
       messageId: key.id,
       messageKey: key,
@@ -157,6 +189,10 @@ export function parseIncomingMessages(body: unknown): IncomingMessage[] {
       fromMe: key.fromMe,
       isGroup,
       ...(isGroup ? { groupJid: key.remoteJid } : {}),
+      ...(adReferral ? { adReferral } : {}),
+      // Guardado só pra diagnóstico de rastreamento de anúncio — usado apenas na criação de
+      // lead novo (ver crm.service.ts findOrCreateLeadByPhone), descartado depois.
+      rawFirstMessage: data,
     };
 
     const message = data.message ?? {};

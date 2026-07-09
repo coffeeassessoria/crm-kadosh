@@ -241,8 +241,17 @@ export async function runAdminTool(name: string, input: Record<string, unknown>)
       }
 
       const criados: { nome: string; numero_pedido: number | null }[] = [];
+      const jaExistiam: string[] = [];
       for (const p of selecionadas) {
         const lead = await crm.findOrCreateLeadByPhone(p.telefone, p.nome_cliente);
+
+        // Evita duplicar: o cliente pode ter fechado pelo fluxo normal (ou por outra proposta)
+        // entre a criação dessa proposta e a confirmação agora.
+        if (await crm.leadJaTemAgendamentoNaData(lead.id, p.data_entrega)) {
+          await crm.resolverProposta(p.id, 'descartado');
+          jaExistiam.push(p.nome_cliente);
+          continue;
+        }
 
         const { agendamento } = await criarAgendamentoCompleto({
           leadId: lead.id,
@@ -262,10 +271,14 @@ export async function runAdminTool(name: string, input: Record<string, unknown>)
         criados.push({ nome: p.nome_cliente, numero_pedido: agendamento.numero_pedido });
       }
 
+      const avisoDuplicata =
+        jaExistiam.length > 0 ? ` (${jaExistiam.join(', ')} já tinha agendamento nessa data — proposta descartada, não duplicada)` : '';
+
       return {
         confirmados: criados.length,
         agendamentos: criados,
-        mensagem: `${criados.length} agendamento(s) confirmado(s) e criado(s) no CRM: ${criados.map((c) => c.nome).join(', ')}.`,
+        descartados_por_duplicata: jaExistiam,
+        mensagem: `${criados.length} agendamento(s) confirmado(s) e criado(s) no CRM: ${criados.map((c) => c.nome).join(', ')}.${avisoDuplicata}`,
       };
     }
 

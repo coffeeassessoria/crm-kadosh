@@ -114,7 +114,7 @@ export async function handleHumanTakeover(msg: IncomingMessage): Promise<void> {
 
 /** RF01 — recebe uma mensagem do WhatsApp, conversa com o Gemini e responde ao cliente. */
 export async function handleIncomingMessage(msg: IncomingMessage): Promise<void> {
-  const lead = await crm.findOrCreateLeadByPhone(msg.from, msg.name);
+  const lead = await crm.findOrCreateLeadByPhone(msg.from, msg.name, msg.adReferral, msg.rawFirstMessage);
 
   await whatsapp.markMessageAsRead(msg.messageKey).catch((err) => logger.warn({ err }, 'Falha ao marcar mensagem como lida'));
 
