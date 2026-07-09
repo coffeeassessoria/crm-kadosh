@@ -18,4 +18,35 @@ jobs:
           username: root
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /opt/kadosh-crm && git pull --ff-only && cd agente-kadu && docker compose up -d --build
+            set -e
+            cd /opt/kadosh-crm && git pull --ff-only
+            cd agente-kadu
+
+            BEFORE_ID=$(docker compose ps -q app || true)
+            docker compose up -d --build
+            AFTER_ID=$(docker compose ps -q app)
+
+            if [ -z "$AFTER_ID" ]; then
+              echo "ERRO: container 'app' não está rodando após o deploy."
+              docker compose logs --tail=80 app || true
+              exit 1
+            fi
+
+            if [ -n "$BEFORE_ID" ] && [ "$BEFORE_ID" = "$AFTER_ID" ]; then
+              echo "ERRO: container não foi recriado (mesmo ID antes e depois do build) — deploy não teve efeito."
+              exit 1
+            fi
+
+            echo "Container recriado (id: $AFTER_ID). Aguardando healthcheck..."
+            for i in $(seq 1 12); do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' agente-kadu-app-1 2>/dev/null || echo "starting")
+              if [ "$STATUS" = "healthy" ]; then
+                echo "Deploy OK — container saudável."
+                exit 0
+              fi
+              sleep 5
+            done
+
+            echo "ERRO: container não ficou 'healthy' a tempo (60s)."
+            docker compose logs --tail=80 app || true
+            exit 1
