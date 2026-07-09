@@ -7,7 +7,9 @@ const envSchema = z.object({
 
   // LLM
   GOOGLE_AI_API_KEY: z.string().min(1, 'GOOGLE_AI_API_KEY é obrigatória'),
-  GOOGLE_AI_MODEL: z.string().default('gemini-2.0-flash'),
+  // Alias mantido pelo Google apontando pro modelo flash atual — evita quebrar quando uma
+  // versão específica (ex: gemini-2.5-flash) for descontinuada. Ver incidente de 2026-07-09.
+  GOOGLE_AI_MODEL: z.string().default('gemini-flash-latest'),
 
   // Transcrição de áudio (opcional)
   OPENAI_API_KEY: z.string().optional(),
