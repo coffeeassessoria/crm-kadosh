@@ -2,3 +2,6 @@
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Claude Code (config local, pode conter segredos em comandos aprovados)
+.claude/settings.local.json

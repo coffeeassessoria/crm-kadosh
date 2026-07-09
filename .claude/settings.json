@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ssh -i ~/.ssh/kadosh_vps_ed25519 -o ConnectTimeout=8 -o BatchMode=yes root@76.13.164.112 \"echo '--- estrutura do repo ---' && ls /opt/kadosh-crm && echo '--- containers rodando ---' && docker ps --format 'table {{.Names}}\\\\t{{.Image}}\\\\t{{.Status}}\\\\t{{.Ports}}' && echo '--- todos containers \\(parados tb\\) ---' && docker ps -a --format 'table {{.Names}}\\\\t{{.Image}}\\\\t{{.Status}}'\")",
+      "Bash(node test-dia7.mjs)",
+      "Bash(rm test-dia7.mjs)"
+    ]
+  }
+}
