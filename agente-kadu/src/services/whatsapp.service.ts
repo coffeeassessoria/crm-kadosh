@@ -175,6 +175,13 @@ export function parseIncomingMessages(body: unknown): IncomingMessage[] {
     const key = data?.key as MessageKey | undefined;
     if (!key?.remoteJid || !key.id) continue;
 
+    // Eventos de chamada de voz/vídeo chegam pelo mesmo webhook messages.upsert (Baileys/Evolution),
+    // com messageType "unknown" e message.call preenchido. O remoteJid de uma chamada costuma vir
+    // como "...@lid" sem remoteJidAlt (número real ausente), então não dá pra responder nem faz
+    // sentido criar lead — ignora antes de virar um "Lead WhatsApp" fantasma que trava tentando
+    // enviar mensagem pra um JID que não existe (ver incidente 2026-07-17).
+    if (data?.message?.call) continue;
+
     const isGroup = key.remoteJid.endsWith('@g.us');
     if (isGroup && key.remoteJid !== env.WHATSAPP_GRUPO_OPERACIONAL_ID) continue;
 
