@@ -154,23 +154,34 @@ export async function logMensagem(
   if (error) logger.error({ error, leadId }, 'Falha ao registrar mensagem (auditoria)');
 }
 
-/** Última mensagem trocada com o lead (usada pela rotina de follow-up pra medir o silêncio do cliente). */
-export async function getUltimaMensagem(
-  leadId: string,
-): Promise<{ direcao: 'inbound' | 'outbound'; is_followup: boolean; created_at: string } | null> {
+export interface UltimaMensagemLead {
+  lead_id: string;
+  direcao: 'inbound' | 'outbound';
+  is_followup: boolean;
+  created_at: string;
+}
+
+/**
+ * Última mensagem de cada lead, só entre as trocadas nos últimos `minutosJanela` minutos —
+ * usada pela rotina de follow-up pra achar quem está em silêncio recente sem precisar de uma
+ * query por lead (evita N+1: um único SELECT cobre todos os leads ativos).
+ */
+export async function getUltimasMensagensRecentes(minutosJanela: number): Promise<Map<string, UltimaMensagemLead>> {
+  const desde = new Date(Date.now() - minutosJanela * 60 * 1000).toISOString();
   const { data, error } = await supabase
     .from('mensagens')
-    .select('direcao, is_followup, created_at')
-    .eq('lead_id', leadId)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .select('lead_id, direcao, is_followup, created_at')
+    .gte('created_at', desde)
+    .order('created_at', { ascending: false });
 
-  if (error) {
-    logger.error({ error, leadId }, 'Falha ao buscar última mensagem do lead');
-    return null;
+  if (error) throw error;
+
+  const porLead = new Map<string, UltimaMensagemLead>();
+  for (const row of (data ?? []) as UltimaMensagemLead[]) {
+    // Já ordenado desc — a primeira ocorrência de cada lead_id é a mensagem mais recente dele.
+    if (!porLead.has(row.lead_id)) porLead.set(row.lead_id, row);
   }
-  return data as { direcao: 'inbound' | 'outbound'; is_followup: boolean; created_at: string } | null;
+  return porLead;
 }
 
 /** Leads em conversa ativa (fora dos status resolvidos) — candidatos à rotina de follow-up automático. */

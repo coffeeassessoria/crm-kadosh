@@ -12,6 +12,15 @@ const ai = new GoogleGenAI({ apiKey: env.GOOGLE_AI_API_KEY });
 /** Minutos de silêncio do cliente após a última mensagem do Kadu que disparam o follow-up automático. */
 const SILENCIO_MINUTOS = 2;
 
+/**
+ * Acima disso não é mais "o cliente sumiu no meio da conversa" — é um lead frio/antigo, e a
+ * rotina não deve mexer nele (evita reabrir conversas mortas ou martelar a API por leads
+ * antigos nunca marcados como resolvidos). Ver incidente 2026-07-23: sem esse teto, TODO lead
+ * não resolvido (371 no CRM) virava candidato em toda execução, estourou a cota diária do
+ * Gemini em ~18min.
+ */
+const SILENCIO_MAXIMO_MINUTOS = 30;
+
 /** Status em que não faz sentido reengajar automaticamente (já resolvidos ou aguardando humano). */
 const STATUS_SEM_FOLLOWUP: string[] = ['agendado', 'convertido', 'perdido', 'escalado'];
 
@@ -32,23 +41,31 @@ ou repetir tudo que já foi perguntado. No máximo uma pergunta ou chamada pra a
 tinha tudo pra fechar o agendamento, retome exatamente esse ponto. Responda só com o texto
 da mensagem que será enviada ao cliente pelo WhatsApp, sem aspas nem comentários.`;
 
-/** Gera e envia um follow-up cordial pra um lead específico, se ele estiver de fato em silêncio. */
-async function tentarFollowUp(lead: Lead): Promise<void> {
-  if (!lead.telefone) return;
+/** Turno final sintético — a API do Gemini exige que `contents` termine num turno "user", nunca "model". */
+const GATILHO_FOLLOWUP: Content = {
+  role: 'user',
+  parts: [{ text: '[sistema: cliente sem resposta — gere o follow-up conforme as instruções acima]' }],
+};
 
-  const ultimaMensagem = await crm.getUltimaMensagem(lead.id);
-  if (!ultimaMensagem || ultimaMensagem.direcao !== 'outbound' || ultimaMensagem.is_followup) return;
+/** Gera e envia um follow-up cordial pra um lead específico, a partir da última mensagem já carregada. */
+async function tentarFollowUp(lead: Lead, ultimaMensagem: crm.UltimaMensagemLead): Promise<void> {
+  if (!lead.telefone) return;
+  if (ultimaMensagem.direcao !== 'outbound' || ultimaMensagem.is_followup) return;
 
   const idadeMs = Date.now() - new Date(ultimaMensagem.created_at).getTime();
   if (idadeMs < SILENCIO_MINUTOS * 60 * 1000) return;
+  if (idadeMs > SILENCIO_MAXIMO_MINUTOS * 60 * 1000) return;
 
   const history = await crm.getConversationHistory(lead.id, 20);
   if (history.length === 0) return;
 
-  const contents: Content[] = history.map((m) => ({
-    role: m.role === 'assistant' ? ('model' as const) : ('user' as const),
-    parts: [{ text: m.content }],
-  }));
+  const contents: Content[] = [
+    ...history.map((m) => ({
+      role: m.role === 'assistant' ? ('model' as const) : ('user' as const),
+      parts: [{ text: m.content }],
+    })),
+    GATILHO_FOLLOWUP,
+  ];
 
   const response = await ai.models.generateContent({
     model: env.GOOGLE_AI_MODEL,
@@ -68,17 +85,36 @@ async function tentarFollowUp(lead: Lead): Promise<void> {
   logger.info({ leadId: lead.id }, 'Follow-up automático enviado');
 }
 
-/** Percorre leads em conversa ativa e dispara UM follow-up pra quem ficou em silêncio após uma mensagem do Kadu. */
+let execucaoEmAndamento = false;
+
+/** Percorre leads em conversa ativa e dispara UM follow-up pra quem ficou em silêncio recente após uma mensagem do Kadu. */
 export async function executarRotinaFollowUp(): Promise<void> {
-  const leads = await crm.leadsAtivosParaFollowUp(STATUS_SEM_FOLLOWUP);
+  // Evita sweeps sobrepostos se uma execução anterior ainda não terminou (ex: Gemini lento/instável).
+  if (execucaoEmAndamento) {
+    logger.warn('Rotina de follow-up ainda rodando da execução anterior — pulando este ciclo');
+    return;
+  }
+  execucaoEmAndamento = true;
 
-  for (const lead of leads) {
-    if (isHumanTakeoverActive(lead)) continue;
+  try {
+    const [leads, ultimasMensagens] = await Promise.all([
+      crm.leadsAtivosParaFollowUp(STATUS_SEM_FOLLOWUP),
+      crm.getUltimasMensagensRecentes(SILENCIO_MAXIMO_MINUTOS),
+    ]);
 
-    try {
-      await tentarFollowUp(lead);
-    } catch (err) {
-      logger.error({ err, leadId: lead.id }, 'Falha ao processar follow-up automático do lead');
+    for (const lead of leads) {
+      const ultimaMensagem = ultimasMensagens.get(lead.id);
+      // Sem mensagem dentro da janela: ou não tem silêncio recente, ou o lead está frio — não mexe.
+      if (!ultimaMensagem) continue;
+      if (isHumanTakeoverActive(lead)) continue;
+
+      try {
+        await tentarFollowUp(lead, ultimaMensagem);
+      } catch (err) {
+        logger.error({ err, leadId: lead.id }, 'Falha ao processar follow-up automático do lead');
+      }
     }
+  } finally {
+    execucaoEmAndamento = false;
   }
 }
