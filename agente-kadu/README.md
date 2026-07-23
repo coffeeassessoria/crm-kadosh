@@ -15,9 +15,15 @@ O prompt de sistema usado pelo agente é versionado em [`prompts/system-prompt-v
 - Integração com o Supabase existente (tabela `leads` + novas tabelas `mensagens`,
   `agendamentos`, `pix_solicitacoes` — ver [`../SUPABASE_PATCH_03.sql`](../SUPABASE_PATCH_03.sql)
   e [`../SUPABASE_PATCH_04.sql`](../SUPABASE_PATCH_04.sql))
-- Regra de sinal via PIX (50% se entrega > 3 dias)
+- Sinal via PIX **desativado** (2026-07-23): não é mais cobrado adiantado, estava travando
+  reservas — `create_appointment` é chamado direto ao cliente confirmar. Tools `send_pix_request`/
+  `confirm_pix` seguem no código só pro caso raro do próprio cliente pedir pra adiantar.
+- CEP é apenas dado de apoio pra localizar o endereço — nunca trava o fechamento (2026-07-23)
 - Locação com 1 dia de permanência incluso + diária adicional configurável por dia extra
 - Pausa automática de 24h do agente quando um humano responde manualmente pelo WhatsApp
+- Rotina de follow-up automático (2026-07-23): se o cliente ficar 2min sem responder após
+  uma mensagem do Kadu, o backend gera e envia UM follow-up cordial e não insistente pra
+  tentar resgatar a venda (`src/services/followup.service.ts` + `src/queue/followupScheduler.ts`)
 - Criação de evento no Google Agenda (Service Account, opcional)
 - Geração de link de rota do Google Maps
 - Briefing diário operacional (cron configurável, padrão 06h30 América/Cuiabá)
@@ -94,7 +100,7 @@ Conforme a seção 8 do PRD, os itens abaixo precisam ser fornecidos pela Kadosh
 
 | Variável | O que é | Onde conseguir |
 |---|---|---|
-| `CHAVE_PIX` | Chave PIX para cobrança do sinal | Conta bancária da empresa |
+| `CHAVE_PIX` | Chave PIX (uso excepcional — cliente adiantando por conta própria, não é mais cobrado) | Conta bancária da empresa |
 | `WHATSAPP_GRUPO_OPERACIONAL_ID` | ID do grupo do WhatsApp da equipe | Ver seção 6 abaixo |
 | `SUPABASE_SERVICE_ROLE_KEY` | Chave de serviço do Supabase (já existe o projeto) | Supabase > Settings > API |
 | `GOOGLE_SERVICE_ACCOUNT_EMAIL` / `GOOGLE_PRIVATE_KEY` | Credenciais do Google Agenda | Google Cloud Console |

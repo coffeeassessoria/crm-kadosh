@@ -140,6 +140,7 @@ export async function logMensagem(
   tipo: string,
   conteudo: string,
   whatsappMessageId?: string,
+  isFollowup = false,
 ) {
   const { error } = await supabase.from('mensagens').insert({
     lead_id: leadId,
@@ -147,9 +148,40 @@ export async function logMensagem(
     tipo,
     conteudo,
     whatsapp_message_id: whatsappMessageId ?? null,
+    is_followup: isFollowup,
   });
 
   if (error) logger.error({ error, leadId }, 'Falha ao registrar mensagem (auditoria)');
+}
+
+/** Última mensagem trocada com o lead (usada pela rotina de follow-up pra medir o silêncio do cliente). */
+export async function getUltimaMensagem(
+  leadId: string,
+): Promise<{ direcao: 'inbound' | 'outbound'; is_followup: boolean; created_at: string } | null> {
+  const { data, error } = await supabase
+    .from('mensagens')
+    .select('direcao, is_followup, created_at')
+    .eq('lead_id', leadId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    logger.error({ error, leadId }, 'Falha ao buscar última mensagem do lead');
+    return null;
+  }
+  return data as { direcao: 'inbound' | 'outbound'; is_followup: boolean; created_at: string } | null;
+}
+
+/** Leads em conversa ativa (fora dos status resolvidos) — candidatos à rotina de follow-up automático. */
+export async function leadsAtivosParaFollowUp(statusResolvidos: string[]): Promise<Lead[]> {
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*')
+    .not('status', 'in', `(${statusResolvidos.join(',')})`);
+
+  if (error) throw error;
+  return (data ?? []) as Lead[];
 }
 
 /** Recupera as últimas mensagens da conversa no formato genérico (user/assistant). */
