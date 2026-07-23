@@ -35,3 +35,9 @@ Além do atendimento a leads, o Kadu tem um segundo agente ("Kadu Financeiro") q
 no grupo operacional do WhatsApp com consultas de agenda, financeiro e funil de leads. Se o
 agente falhar ao responder um lead (ex: API do Gemini fora do ar), o grupo operacional recebe
 um alerta automático.
+
+Desde 23/07/2026, o Kadu não cobra mais sinal via PIX adiantado pra reservar (estava
+travando fechamentos) e não exige CEP do cliente pra fechar o agendamento (é só dado de
+apoio pra achar o endereço). Também passou a fazer um follow-up automático e cordial quando
+o cliente fica 2min em silêncio no meio da conversa, pra tentar resgatar a venda sem ser
+insistente.

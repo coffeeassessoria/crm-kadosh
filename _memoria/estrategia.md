@@ -24,11 +24,22 @@ implementado no agente Kadu em 03/07/2026 — o que falta agora é aumentar a fr
 Atendimento ao cliente — já endereçado parcialmente pelo agente Kadu no WhatsApp.
 Reconciliação diária automática implementada em 03/07/2026: o Kadu Financeiro revê as
 conversas do dia e propõe (pra confirmação da equipe) agendamentos que fecharam no chat
-mas não foram registrados no CRM. Próximo passo: acompanhamento pós-entrega e retirada.
+mas não foram registrados no CRM. Corrigido em 09/07/2026: parava de duplicar agendamento
+quando o cliente já tinha fechado por outro caminho antes da proposta ser confirmada.
+Próximo passo: acompanhamento pós-entrega e retirada.
+
+Redução de fricção na reserva implementada em 23/07/2026: removida a exigência de sinal via
+PIX adiantado (travava fechamentos) e o CEP deixou de ser obrigatório (só ajuda a localizar
+o endereço). Também criada uma rotina de follow-up automático — se o cliente fica 2min em
+silêncio no meio da conversa, o Kadu manda um follow-up cordial pra tentar resgatar a venda.
 
 ## Próximas prioridades
 
-1. Maximizar taxa de conversão dos leads que chegam via WhatsApp
+1. Maximizar taxa de conversão dos leads que chegam via WhatsApp — rastreamento de origem
+   de anúncio (Meta Ads "Clique para o WhatsApp") implementado em 09/07/2026: o Kadu já
+   identifica automaticamente qual campanha/anúncio gerou o lead e popula isso no CRM.
+   Ainda não testado contra um anúncio real — validar quando o primeiro lead vindo de
+   anúncio chegar.
 2. Controle de disponibilidade de caçambas em tempo real — concluído em 03/07/2026 (check_availability no agente Kadu)
 3. Crescimento da frota quando o fluxo de caixa permitir
 
